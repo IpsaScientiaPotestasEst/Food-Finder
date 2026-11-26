@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,7 +23,9 @@
       --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -97,7 +100,10 @@
       align-items: center;
     }
 
-    select, input[type="text"], input[type="password"], input[type="number"] {
+    select,
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
       padding: 0.48rem 0.75rem;
       border-radius: var(--radius);
       border: 1px solid var(--border);
@@ -107,7 +113,8 @@
       font-family: var(--font-sans);
     }
 
-    select:focus, input:focus {
+    select:focus,
+    input:focus {
       outline: 2px solid var(--primary);
       outline-offset: -1px;
     }
@@ -127,14 +134,19 @@
       transition: background 0.15s ease, border-color 0.15s ease;
     }
 
-    button:hover { background: var(--primary-hover); }
+    button:hover {
+      background: var(--primary-hover);
+    }
 
     button.secondary {
       background: var(--surface);
       color: var(--text);
       border-color: var(--border);
     }
-    button.secondary:hover { background: #f4f4f5; }
+
+    button.secondary:hover {
+      background: #f4f4f5;
+    }
 
     button.active-pill {
       background: var(--primary-soft);
@@ -170,7 +182,11 @@
       font-size: 0.8rem;
       cursor: pointer;
     }
-    .recent-pill:hover { border-color: var(--primary); color: var(--primary); }
+
+    .recent-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
 
     #status-banner {
       display: none;
@@ -181,7 +197,10 @@
       border-left: 4px solid var(--primary);
       border-radius: var(--radius);
     }
-    #status-banner.error { border-left-color: var(--danger); }
+
+    #status-banner.error {
+      border-left-color: var(--danger);
+    }
 
     .grid {
       display: grid;
@@ -199,7 +218,10 @@
       justify-content: space-between;
       transition: border-color 0.15s ease;
     }
-    .card:hover { border-color: #a1a1aa; }
+
+    .card:hover {
+      border-color: #a1a1aa;
+    }
 
     .card-img {
       width: 100%;
@@ -250,9 +272,20 @@
       font-weight: 600;
     }
 
-    .badge.edamam { background: #ecfdf5; color: #047857; }
-    .badge.ninjas { background: #fef3c7; color: #b45309; }
-    .badge.dummy { background: #eff6ff; color: #1d4ed8; }
+    .badge.edamam {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .badge.ninjas {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .badge.dummy {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
 
     .card h3 {
       margin: 0 0 0.5rem 0;
@@ -266,7 +299,11 @@
       gap: 0.5rem;
       margin-top: 1rem;
     }
-    .card-actions button:first-child { flex: 1; justify-content: center; }
+
+    .card-actions button:first-child {
+      flex: 1;
+      justify-content: center;
+    }
 
     #pagination-bar {
       display: none;
@@ -291,8 +328,9 @@
       text-align: center;
       max-width: 600px;
       margin: 2rem auto;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
+
     .timer-page-display {
       font-size: 5rem;
       font-variant-numeric: tabular-nums;
@@ -345,8 +383,11 @@
       grid-template-columns: 1fr 1.35fr;
       gap: 2.5rem;
     }
+
     @media (max-width: 850px) {
-      .detail-layout { grid-template-columns: 1fr; }
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
     }
 
     .scaler-bar {
@@ -373,6 +414,7 @@
       font-size: 0.94rem;
       cursor: pointer;
     }
+
     .ingredient-list li.checked span {
       text-decoration: line-through;
       color: #a1a1aa;
@@ -395,7 +437,11 @@
       cursor: pointer;
       transition: background 0.15s ease;
     }
-    .step-list li:hover { background: #fafafa; }
+
+    .step-list li:hover {
+      background: #fafafa;
+    }
+
     .step-list li::before {
       content: counter(step-counter);
       position: absolute;
@@ -412,12 +458,16 @@
       align-items: center;
       justify-content: center;
     }
+
     .step-list li.done {
       background: #f4f4f5;
       color: #71717a;
       text-decoration: line-through;
     }
-    .step-list li.done::before { background: #a1a1aa; }
+
+    .step-list li.done::before {
+      background: #a1a1aa;
+    }
 
     body.cook-mode .ingredient-list li,
     body.cook-mode .step-list li {
@@ -429,12 +479,13 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
       z-index: 1500;
       align-items: center;
       justify-content: center;
       padding: 1rem;
     }
+
     .modal-card {
       background: var(--surface);
       border-radius: var(--radius);
@@ -449,12 +500,14 @@
     .form-group {
       margin-bottom: 1rem;
     }
+
     .form-group label {
       display: block;
       font-size: 0.84rem;
       font-weight: 600;
       margin-bottom: 0.3rem;
     }
+
     .form-group input {
       width: 100%;
     }
@@ -468,6 +521,7 @@
       gap: 0.5rem;
       z-index: 1600;
     }
+
     .toast {
       background: #18181b;
       color: #fff;
@@ -477,19 +531,34 @@
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       animation: slideIn 0.2s ease;
     }
-    .toast.error { background: var(--danger); }
-    .toast.success { background: var(--primary); }
+
+    .toast.error {
+      background: var(--danger);
+    }
+
+    .toast.success {
+      background: var(--primary);
+    }
+
     .toast button {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       padding: 0.2rem 0.5rem;
       font-size: 0.78rem;
     }
+
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     kbd {
@@ -502,14 +571,29 @@
     }
 
     @media print {
-      header, #toast-container, .detail-tools, .ai-meta, .back-btn, .scaler-bar {
+
+      header,
+      #toast-container,
+      .detail-tools,
+      .ai-meta,
+      .back-btn,
+      .scaler-bar {
         display: none !important;
       }
-      body { background: #fff; }
-      #detail-view { border: none; padding: 0; display: block !important; }
+
+      body {
+        background: #fff;
+      }
+
+      #detail-view {
+        border: none;
+        padding: 0;
+        display: block !important;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <div id="top-progress"></div>
@@ -559,7 +643,8 @@
         <option value="Side">Side</option>
       </select>
 
-      <input type="text" id="search-input" placeholder="Search recipes (e.g. ramen, tiramisu, tacos)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') executeRecipeQuery()" />
+      <input type="text" id="search-input" placeholder="Search recipes (e.g. ramen, tiramisu, tacos)..."
+        style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') executeRecipeQuery()" />
       <button onclick="executeRecipeQuery()">Search</button>
       <button class="secondary" onclick="resetHome()">Reset</button>
     </div>
@@ -582,7 +667,7 @@
       <button class="secondary" onclick="closeTimerPage()" style="margin-bottom: 1rem;">← Return to Feed</button>
       <h2 style="font-family: var(--font-serif); font-size: 2rem; margin: 0 0 0.5rem 0;">Kitchen Timer</h2>
       <p style="color: var(--muted); margin-top: 0;">Set countdown durations for baking, boiling, or roasting.</p>
-      
+
       <div class="timer-page-display" id="page-timer-display">00:00</div>
 
       <div style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
@@ -593,8 +678,10 @@
       </div>
 
       <div style="display: flex; justify-content: center; gap: 0.75rem;">
-        <button id="page-timer-toggle" onclick="toggleTimer()" style="padding: 0.75rem 2rem; font-size: 1rem;">Start Timer</button>
-        <button class="secondary" onclick="resetTimer()" style="padding: 0.75rem 1.5rem; font-size: 1rem;">Reset</button>
+        <button id="page-timer-toggle" onclick="toggleTimer()" style="padding: 0.75rem 2rem; font-size: 1rem;">Start
+          Timer</button>
+        <button class="secondary" onclick="resetTimer()"
+          style="padding: 0.75rem 1.5rem; font-size: 1rem;">Reset</button>
       </div>
     </div>
   </main>
@@ -607,7 +694,8 @@
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
       <p style="font-size:0.86rem; color:var(--muted); margin-top:0;">
-        Add optional free developer keys below to unlock over 2.1 million recipes. Keys are stored locally in your browser.
+        Add optional free developer keys below to unlock over 2.1 million recipes. Keys are stored locally in your
+        browser.
       </p>
 
       <div class="form-group">
@@ -655,13 +743,16 @@
         <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
-      <p style="font-size:0.9rem; color:var(--muted);">Multi-database recipe aggregator with batched pagination for instant UI performance.</p>
+      <p style="font-size:0.9rem; color:var(--muted);">Multi-database recipe aggregator with batched pagination for
+        instant UI performance.</p>
       <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
         <li><kbd>/</kbd> — Focus search input instantly.</li>
         <li><kbd>Esc</kbd> — Close active modal or recipe detail view.</li>
         <li><kbd>?</kbd> — Open this help guide anytime.</li>
-        <li><strong>Database Selector:</strong> Switch between keyless databases (TheMealDB, DummyJSON) or add free API keys for Edamam & API Ninjas.</li>
-        <li><strong>Load More:</strong> Click at the bottom of the feed to reveal the next batch of recipes instantly.</li>
+        <li><strong>Database Selector:</strong> Switch between keyless databases (TheMealDB, DummyJSON) or add free API
+          keys for Edamam & API Ninjas.</li>
+        <li><strong>Load More:</strong> Click at the bottom of the feed to reveal the next batch of recipes instantly.
+        </li>
       </ul>
     </div>
   </div>
@@ -693,112 +784,127 @@
     // --- API ADAPTERS ---
 
     async function fetchTheMealDB(query, isCategory = false) {
-      const url = isCategory
-        ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(query)}`
-        : `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.meals) return [];
+      // Category filter still works for valid MealDB categories
+      if (isCategory) {
+        const url = `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(query)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.meals) return [];
+        return data.meals.map(m => {
+          const item = {
+            id: `mealdb_${m.idMeal}`, rawId: m.idMeal, source: "TheMealDB", badgeClass: "",
+            title: m.strMeal, image: m.strMealThumb, link: `https://www.themealdb.com/meal/${m.idMeal}`,
+            summary: `${m.strArea || "International"} ${m.strCategory || query} recipe with step-by-step instructions.`,
+            needsHydration: true
+          };
+          recipeCache.set(item.id, item);
+          return item;
+        });
+      }
 
-      return data.meals.map(m => {
-        const item = {
-          id: `mealdb_${m.idMeal}`,
-          rawId: m.idMeal,
-          source: "TheMealDB",
-          badgeClass: "",
-          title: m.strMeal,
-          image: m.strMealThumb,
-          link: `https://www.themealdb.com/meal/${m.idMeal}`,
-          summary: m.strInstructions
-            ? m.strInstructions.slice(0, 125) + "..."
-            : `${m.strArea || "International"} ${m.strCategory || query} recipe with step-by-step instructions.`,
-          needsHydration: !m.strInstructions
-        };
-        if (!item.needsHydration) {
+      // KEYWORD SEARCH: expand into individual terms, then hydrate via lookup.php.
+      // This turns "creamy chicken pasta" into chicken+pasta listings = 100+ meals,
+      // instead of search.php's near-empty exact-title match.
+
+      // KEYWORD SEARCH
+      // Pull broad recipe sets from categories, then perform local matching.
+      // This prevents searches like "raspberry pie" from missing desserts that
+      // don't contain an exact title match.
+
+      const searchTerms = query
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+
+      const fallbackCategories = [
+        "Dessert",
+        "Breakfast",
+        "Chicken",
+        "Beef",
+        "Seafood",
+        "Vegetarian",
+        "Pasta",
+        "Starter",
+        "Side"
+      ];
+
+      const categoryResults = await Promise.all(
+        fallbackCategories.map(async cat => {
+          try {
+            const res = await fetch(
+              `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(cat)}`
+            );
+            const data = await res.json();
+            return data.meals || [];
+          } catch {
+            return [];
+          }
+        })
+      );
+
+      const searchResult = await fetch(
+        `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`
+      );
+
+      const searchData = await searchResult.json();
+
+      const mergedCandidates = [
+        ...(searchData.meals || []),
+        ...categoryResults.flat()
+      ];
+
+      const seen = new Set();
+      const merged = [];
+
+      for (const meal of mergedCandidates) {
+        if (!meal || seen.has(meal.idMeal)) continue;
+
+        seen.add(meal.idMeal);
+
+        const title = (meal.strMeal || "").toLowerCase();
+
+        if (
+          searchTerms.length === 0 ||
+          searchTerms.every(term => title.includes(term)) ||
+          searchTerms.some(term => title.includes(term))
+        ) {
+          merged.push(meal);
+        }
+      }
+
+      const MAX_HYDRATE = 60; // parallel lookup.php calls -> full ingredients + steps
+      const hydrated = await Promise.all(merged.slice(0, MAX_HYDRATE).map(async m => {
+        try {
+          const r = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${m.idMeal}`);
+          const d = await r.json();
+          const meal = d.meals && d.meals[0];
+          if (!meal) throw new Error("no meal");
           const ingredients = [];
           for (let i = 1; i <= 20; i++) {
-            const ing = m[`strIngredient${i}`];
-            const measure = m[`strMeasure${i}`];
+            const ing = meal[`strIngredient${i}`], measure = meal[`strMeasure${i}`];
             if (ing && ing.trim()) ingredients.push(`${measure ? measure.trim() + " " : ""}${ing.trim()}`);
           }
-          item.ingredients = ingredients;
-          item.instructions = m.strInstructions.split(/\r?\n/).filter(s => s.trim().length > 0);
-          item.youtube = m.strYoutube || "";
-          item.prepTime = "15m";
-          item.cookTime = "25m";
-          item.servings = "4 servings";
+          return {
+            id: `mealdb_${meal.idMeal}`, rawId: meal.idMeal, source: "TheMealDB", badgeClass: "",
+            title: meal.strMeal, image: meal.strMealThumb, link: `https://www.themealdb.com/meal/${meal.idMeal}`,
+            summary: meal.strInstructions ? meal.strInstructions.slice(0, 125) + "..." : "Full step-by-step recipe.",
+            ingredients,
+            instructions: meal.strInstructions.split(/\r?\n/).filter(s => s.trim().length > 0),
+            youtube: meal.strYoutube || "", prepTime: "15m", cookTime: "25m", servings: "4 servings",
+            needsHydration: false
+          };
+        } catch {
+          return {
+            id: `mealdb_${m.idMeal}`, rawId: m.idMeal, source: "TheMealDB", badgeClass: "",
+            title: m.strMeal, image: m.strMealThumb, link: `https://www.themealdb.com/meal/${m.idMeal}`,
+            summary: "Recipe details load when opened.", needsHydration: true
+          };
         }
-        recipeCache.set(item.id, item);
-        return item;
-      });
+      }));
+
+      hydrated.forEach(item => recipeCache.set(item.id, item));
+      return hydrated;
     }
-
-    async function fetchDummyJSON(query, skip = 0) {
-      const url = `https://dummyjson.com/recipes/search?q=${encodeURIComponent(query)}&limit=30&skip=${skip}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      dummyTotal = data.total || 0;
-      dummySkip = skip + (data.recipes ? data.recipes.length : 0);
-
-      return (data.recipes || []).map(r => {
-        const item = {
-          id: `dummy_${r.id}`,
-          source: "DummyJSON",
-          badgeClass: "dummy",
-          title: r.name,
-          image: r.image,
-          link: `https://dummyjson.com/recipes/${r.id}`,
-          summary: `${r.cuisine} • ${r.difficulty} • ${r.caloriesPerServing} kcal/serving`,
-          ingredients: r.ingredients || [],
-          instructions: r.instructions || [],
-          prepTime: `${r.prepTimeMinutes || 15}m`,
-          cookTime: `${r.cookTimeMinutes || 20}m`,
-          servings: `${r.servings || 4} servings`,
-          needsHydration: false
-        };
-        recipeCache.set(item.id, item);
-        return item;
-      });
-    }
-
-    async function fetchEdamam(query, nextUrl = null) {
-      if (!apiKeys.edamamId || !apiKeys.edamamKey) return [];
-      const url = nextUrl || `https://api.edamam.com/api/recipes/v2?type=public&q=${encodeURIComponent(query)}&app_id=${encodeURIComponent(apiKeys.edamamId)}&app_key=${encodeURIComponent(apiKeys.edamamKey)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Edamam API rejected request. Check your App ID & Key.");
-      const data = await res.json();
-
-      edamamNextHref = data._links && data._links.next ? data._links.next.href : null;
-
-      return (data.hits || []).map((hit, idx) => {
-        const r = hit.recipe;
-        const hash = r.uri.split("#recipe_")[1] || `${Date.now()}_${idx}`;
-        const perServingCal = r.yield ? Math.round(r.calories / r.yield) : Math.round(r.calories);
-        const item = {
-          id: `edamam_${hash}`,
-          source: "Edamam",
-          badgeClass: "edamam",
-          title: r.label,
-          image: r.image,
-          link: r.url,
-          summary: `${(r.cuisineType && r.cuisineType[0]) || "Global"} • ${perServingCal} kcal/serving • Source: ${r.source}`,
-          ingredients: r.ingredientLines || [],
-          instructions: [
-            `This recipe is indexed from ${r.source}. All ${r.ingredientLines.length} ingredients are scaled and ready on the left.`,
-            `Click "View Full Publisher Directions ↗" above to follow the original step-by-step preparation guide.`
-          ],
-          prepTime: r.totalTime ? `${r.totalTime}m total` : "Varies",
-          cookTime: "See source",
-          servings: `${r.yield || 4} servings`,
-          isExternalInstructions: true,
-          publisherName: r.source,
-          needsHydration: false
-        };
-        recipeCache.set(item.id, item);
-        return item;
-      });
-    }
-
     async function fetchApiNinjas(query) {
       if (!apiKeys.ninjasKey) return [];
       const url = `https://api.api-ninjas.com/v1/recipe?query=${encodeURIComponent(query)}`;
@@ -838,7 +944,7 @@
 
     // --- UNIFIED DISPATCHER ---
 
-    window.executeRecipeQuery = async function(isCategoryMode = false) {
+    window.executeRecipeQuery = async function (isCategoryMode = false) {
       const searchVal = document.getElementById("search-input").value.trim();
       const catVal = document.getElementById("category-select").value;
       const source = document.getElementById("source-select").value;
@@ -911,7 +1017,7 @@
         fullMasterPool = combined;
         hideStatusBanner();
         setProgress(100);
-        
+
         // Render first batch
         renderNextBatch();
         showToast(`Loaded ${fullMasterPool.length} recipes for "${query}"`, "success");
@@ -921,17 +1027,17 @@
       }
     };
 
-    window.loadRecipesByCategory = function() {
+    window.loadRecipesByCategory = function () {
       document.getElementById("search-input").value = "";
       executeRecipeQuery(true);
     };
 
-    window.handleSourceChange = function() {
+    window.handleSourceChange = function () {
       const hasSearch = document.getElementById("search-input").value.trim().length > 0;
       executeRecipeQuery(!hasSearch);
     };
 
-    window.loadNextPage = async function() {
+    window.loadNextPage = async function () {
       const btn = document.getElementById("load-more-btn");
       btn.disabled = true;
       btn.textContent = "Loading...";
@@ -971,7 +1077,7 @@
     function renderNextBatch() {
       const nextBatch = fullMasterPool.slice(displayedCount, displayedCount + PAGE_SIZE);
       displayedCount += nextBatch.length;
-      
+
       const grid = document.getElementById("feed-grid");
       if (displayedCount === nextBatch.length) {
         grid.innerHTML = ""; // First render
@@ -1053,11 +1159,11 @@
       }
     }
 
-    window.showToast = function(message, type = "info", undoCallback = null) {
+    window.showToast = function (message, type = "info", undoCallback = null) {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
-      
+
       const span = document.createElement("span");
       span.textContent = message;
       toast.appendChild(span);
@@ -1087,7 +1193,7 @@
       document.getElementById("status-banner").style.display = "none";
     }
 
-    window.openRecipeDetail = async function(id) {
+    window.openRecipeDetail = async function (id) {
       const offlineMatch = savedRecipes.find(r => r.id === id && r.ingredients);
       if (offlineMatch) {
         currentRecipe = offlineMatch;
@@ -1288,13 +1394,13 @@
       `).join("");
     }
 
-    window.setScale = function(mult) {
+    window.setScale = function (mult) {
       currentScale = mult;
       renderRecipeDetailView(currentRecipe);
       showToast(`Scaled ingredients to ${mult}x`);
     };
 
-    window.toggleStepDone = function(liEl) {
+    window.toggleStepDone = function (liEl) {
       liEl.classList.toggle("done");
       const all = document.querySelectorAll(".step-list li").length;
       const done = document.querySelectorAll(".step-list li.done").length;
@@ -1304,13 +1410,13 @@
       }
     };
 
-    window.copyIngredients = function() {
+    window.copyIngredients = function () {
       if (!currentRecipe) return;
       navigator.clipboard.writeText(currentRecipe.ingredients.join("\n"));
       showToast("Ingredients copied to clipboard", "success");
     };
 
-    window.closeDetail = function() {
+    window.closeDetail = function () {
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
@@ -1320,7 +1426,7 @@
       }
     };
 
-    window.resetHome = function() {
+    window.resetHome = function () {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("timer-view").style.display = "none";
@@ -1329,7 +1435,7 @@
       loadRecipesByCategory();
     };
 
-    window.toggleSaveItem = function(id) {
+    window.toggleSaveItem = function (id) {
       const item = recipeCache.get(id) || fullMasterPool.find(r => r.id === id) || savedRecipes.find(r => r.id === id);
       if (!item) return;
 
@@ -1354,7 +1460,7 @@
       }
     };
 
-    window.saveFullRecipeOffline = function() {
+    window.saveFullRecipeOffline = function () {
       if (!currentRecipe) return;
       const idx = savedRecipes.findIndex(r => r.id === currentRecipe.id);
       if (idx > -1) {
@@ -1368,7 +1474,7 @@
       showToast("Full recipe saved for offline viewing!", "success");
     };
 
-    window.toggleSavedView = function() {
+    window.toggleSavedView = function () {
       showingSavedOnly = !showingSavedOnly;
       const btn = document.getElementById("view-saved-btn");
       btn.classList.toggle("active-pill", showingSavedOnly);
@@ -1419,7 +1525,7 @@
       });
     }
 
-    window.addAllToShoppingList = function() {
+    window.addAllToShoppingList = function () {
       if (!currentRecipe) return;
       shoppingList.push(...currentRecipe.ingredients);
       localStorage.setItem("ff_shopping_list", JSON.stringify(shoppingList));
@@ -1427,7 +1533,7 @@
       showToast(`Added ${currentRecipe.ingredients.length} items to Shopping List`, "success");
     };
 
-    window.openShoppingModal = function() {
+    window.openShoppingModal = function () {
       const container = document.getElementById("shopping-list-content");
       if (shoppingList.length === 0) {
         container.innerHTML = `<p style="color:var(--muted);">Your shopping list is empty. Open any recipe and click <strong>+ Shopping List</strong>.</p>`;
@@ -1443,19 +1549,19 @@
       document.getElementById("shopping-modal").style.display = "flex";
     };
 
-    window.removeShopItem = function(index) {
+    window.removeShopItem = function (index) {
       shoppingList.splice(index, 1);
       localStorage.setItem("ff_shopping_list", JSON.stringify(shoppingList));
       updateCounters();
       openShoppingModal();
     };
 
-    window.copyShoppingList = function() {
+    window.copyShoppingList = function () {
       navigator.clipboard.writeText(shoppingList.join("\n"));
       showToast("Shopping list copied to clipboard", "success");
     };
 
-    window.clearShoppingList = function() {
+    window.clearShoppingList = function () {
       const backup = [...shoppingList];
       shoppingList = [];
       localStorage.setItem("ff_shopping_list", "[]");
@@ -1471,14 +1577,14 @@
 
     // --- API KEYS MODAL HANDLERS ---
 
-    window.openKeysModal = function() {
+    window.openKeysModal = function () {
       document.getElementById("edamam-id-input").value = apiKeys.edamamId || "";
       document.getElementById("edamam-key-input").value = apiKeys.edamamKey || "";
       document.getElementById("ninjas-key-input").value = apiKeys.ninjasKey || "";
       document.getElementById("keys-modal").style.display = "flex";
     };
 
-    window.saveApiKeys = function() {
+    window.saveApiKeys = function () {
       apiKeys = {
         edamamId: document.getElementById("edamam-id-input").value.trim(),
         edamamKey: document.getElementById("edamam-key-input").value.trim(),
@@ -1491,7 +1597,7 @@
       executeRecipeQuery(!hasSearch);
     };
 
-    window.clearApiKeys = function() {
+    window.clearApiKeys = function () {
       apiKeys = { edamamId: "", edamamKey: "", ninjasKey: "" };
       localStorage.removeItem("ff_api_keys");
       document.getElementById("edamam-id-input").value = "";
@@ -1502,7 +1608,7 @@
 
     // --- COOK MODE & RECENT HISTORY ---
 
-    window.toggleCookMode = async function() {
+    window.toggleCookMode = async function () {
       const active = document.body.classList.toggle("cook-mode");
       const btn = document.getElementById("cook-mode-btn");
       if (btn) btn.classList.toggle("active-pill", active);
@@ -1514,7 +1620,7 @@
           if ("wakeLock" in navigator) {
             wakeLock = await navigator.wakeLock.request("screen");
           }
-        } catch (e) {}
+        } catch (e) { }
       } else {
         if (wakeLock) {
           wakeLock.release();
@@ -1551,7 +1657,7 @@
     let timerSeconds = 0;
     let timerInterval = null;
 
-    window.openTimerPage = function() {
+    window.openTimerPage = function () {
       document.getElementById("feed-grid").style.display = "none";
       document.getElementById("pagination-bar").style.display = "none";
       document.getElementById("detail-view").style.display = "none";
@@ -1562,7 +1668,7 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    window.closeTimerPage = function() {
+    window.closeTimerPage = function () {
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
@@ -1583,7 +1689,7 @@
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 1.2);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     function updateTimerDisplay() {
@@ -1592,12 +1698,12 @@
       document.getElementById("page-timer-display").textContent = `${m}:${s}`;
     }
 
-    window.addTimerMinutes = function(mins) {
+    window.addTimerMinutes = function (mins) {
       timerSeconds += mins * 60;
       updateTimerDisplay();
     };
 
-    window.toggleTimer = function() {
+    window.toggleTimer = function () {
       const btn = document.getElementById("page-timer-toggle");
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -1623,7 +1729,7 @@
       }
     };
 
-    window.resetTimer = function() {
+    window.resetTimer = function () {
       clearInterval(timerInterval);
       timerInterval = null;
       timerSeconds = 0;
@@ -1663,4 +1769,5 @@
     loadRecipesByCategory();
   </script>
 </body>
+
 </html>
