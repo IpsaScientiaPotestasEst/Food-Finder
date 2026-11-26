@@ -33,7 +33,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Top Progress Bar (Heuristic 1: Visibility of System Status) */
     #top-progress {
       position: fixed;
       top: 0;
@@ -149,7 +148,6 @@
       padding: 0 1.5rem;
     }
 
-    /* Recent History Strip (Heuristic 6: Recognition Rather Than Recall) */
     #recent-bar {
       display: none;
       margin-bottom: 1.25rem;
@@ -174,7 +172,6 @@
     }
     .recent-pill:hover { border-color: var(--primary); color: var(--primary); }
 
-    /* Status & Error Recovery Banner (Heuristic 9) */
     #status-banner {
       display: none;
       padding: 1.25rem;
@@ -186,7 +183,6 @@
     }
     #status-banner.error { border-left-color: var(--danger); }
 
-    /* Recipe Grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
@@ -246,7 +242,6 @@
     }
     .card-actions button:first-child { flex: 1; justify-content: center; }
 
-    /* Recipe Detail View */
     #detail-view {
       display: none;
       background: var(--surface);
@@ -302,7 +297,6 @@
       .detail-layout { grid-template-columns: 1fr; }
     }
 
-    /* Serving Scaler & Checklist */
     .scaler-bar {
       display: flex;
       align-items: center;
@@ -332,7 +326,6 @@
       color: #a1a1aa;
     }
 
-    /* Interactive Steps */
     .step-list {
       list-style: none;
       padding: 0;
@@ -374,14 +367,12 @@
     }
     .step-list li.done::before { background: #a1a1aa; }
 
-    /* Cook Mode (Larger text for kitchen counter readability) */
     body.cook-mode .ingredient-list li,
     body.cook-mode .step-list li {
       font-size: 1.2rem;
       line-height: 1.75;
     }
 
-    /* Floating Kitchen Timer Widget */
     #timer-widget {
       position: fixed;
       bottom: 1.25rem;
@@ -404,7 +395,6 @@
       min-width: 54px;
     }
 
-    /* Drawers & Modals (Shopping List & Help) */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -426,7 +416,6 @@
       border: 1px solid var(--border);
     }
 
-    /* Toast Notifications (Heuristic 1 & 3) */
     #toast-container {
       position: fixed;
       bottom: 1.25rem;
@@ -469,7 +458,6 @@
       font-family: monospace;
     }
 
-    /* Clean Print Layout (On-site Feature) */
     @media print {
       header, #timer-widget, #toast-container, .detail-tools, .ai-meta, .back-btn, .scaler-bar {
         display: none !important;
@@ -505,16 +493,14 @@
     </div>
 
     <div class="toolbar">
-      <!-- Verified Feed Selector -->
       <label for="feed-select" style="font-size:0.84rem; color:var(--muted);">Source:</label>
       <select id="feed-select" onchange="loadFeed()">
-        <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
         <option value="https://minimalistbaker.com/feed/">Minimalist Baker</option>
-        <option value="https://www.seriouseats.com/recipes">Serious Eats</option>
-        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food</option>
+        <option value="https://www.feastingathome.com/feed/">Feasting At Home</option>
+        <option value="https://cookieandkate.com/feed/">Cookie and Kate</option>
+        <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
       </select>
 
-      <!-- Preset + Custom Filter Dropdown (Heuristic 6: Recognition Rather Than Recall) -->
       <label for="filter-preset" style="font-size:0.84rem; color:var(--muted);">Filter:</label>
       <select id="filter-preset" onchange="handleFilterPresetChange()">
         <option value="">All Recipes (No Filter)</option>
@@ -531,7 +517,6 @@
 
       <input type="text" id="custom-filter-input" placeholder="Type keyword (Press /)..." style="display:none; width:195px;" oninput="applyFilter()" />
 
-      <!-- CORS Proxy Selector for Error Recovery -->
       <select id="proxy-select" title="Switch CORS proxy if a site blocks requests">
         <option value="https://api.allorigins.win/raw?url=">Proxy: AllOrigins</option>
         <option value="https://corsproxy.io/?">Proxy: Corsproxy.io</option>
@@ -544,23 +529,16 @@
   </header>
 
   <main>
-    <!-- Recently Viewed Bar -->
     <div id="recent-bar">
       <strong style="color:var(--muted);">Recently Viewed:</strong>
       <div id="recent-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
     </div>
 
-    <!-- System Status & Error Recovery Banner -->
     <div id="status-banner"></div>
-
-    <!-- Feed Grid -->
     <div id="feed-grid" class="grid"></div>
-
-    <!-- Recipe Detail View -->
     <div id="detail-view"></div>
   </main>
 
-  <!-- Floating Kitchen Timer (Zero-network Web Audio Chime) -->
   <div id="timer-widget" title="Built-in Kitchen Timer">
     <span>Timer:</span>
     <span id="timer-display">00:00</span>
@@ -570,7 +548,6 @@
     <button class="secondary" style="padding:0.25rem 0.5rem; font-size:0.78rem;" onclick="resetTimer()">Reset</button>
   </div>
 
-  <!-- Shopping List Modal -->
   <div id="shopping-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -585,7 +562,6 @@
     </div>
   </div>
 
-  <!-- Help & Heuristics Guide Modal (Heuristic 10) -->
   <div id="help-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -606,12 +582,7 @@
 
   <div id="toast-container"></div>
 
-  <script type="module">
-    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
-
-    /* =========================================================================
-       1. DYNAMIC CUSTOM FAVICON & BRAND ICON GENERATOR
-       ========================================================================= */
+  <script>
     function generateDynamicFavicon(accentColor = "#14532d", badgeActive = false) {
       const badgeSvg = badgeActive
         ? `<circle cx="50" cy="14" r="10" fill="#d97706" stroke="#ffffff" stroke-width="3"/>`
@@ -619,9 +590,7 @@
       const svg = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
           <rect width="64" height="64" rx="14" fill="${accentColor}"/>
-          <!-- Fork -->
           <path d="M21 14v14c0 3.3 2.7 6 6 6v16h4V34c3.3 0 6-2.7 6-6V14h-3v11h-2V14h-3v11h-2V14h-3z" fill="#ffffff"/>
-          <!-- Spoon -->
           <path d="M44 14c-3.3 0-6 3.6-6 8 0 3.5 1.8 6.5 4.3 7.6V50h3.4V29.6c2.5-1.1 4.3-4.1 4.3-7.6 0-4.4-2.7-8-6-8z" fill="#bbf7d0"/>
           ${badgeSvg}
         </svg>
@@ -636,15 +605,11 @@
     }
     generateDynamicFavicon();
 
-    /* =========================================================================
-       2. STATE MANAGEMENT & LOCAL STORAGE (Zero Extra Network Requests)
-       ========================================================================= */
     let allFeedItems = [];
     let currentRecipe = null;
     let currentScale = 1;
     let showingSavedOnly = false;
     let wakeLock = null;
-    let summarizer = null;
 
     let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
     let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
@@ -656,9 +621,6 @@
       renderRecentBar();
     }
 
-    /* =========================================================================
-       3. HEURISTIC 1 & 3: PROGRESS BAR & UNDO-CAPABLE TOASTS
-       ========================================================================= */
     function setProgress(percent) {
       const bar = document.getElementById("top-progress");
       bar.style.opacity = percent > 0 ? "1" : "0";
@@ -702,22 +664,6 @@
       document.getElementById("status-banner").style.display = "none";
     }
 
-    /* =========================================================================
-       4. OPTIONAL IN-BROWSER AI (Safe Background Init)
-       ========================================================================= */
-    async function initBrowserAI() {
-      try {
-        summarizer = await pipeline('text-generation', 'Xenova/Qwen2.5-0.5B-Instruct');
-      } catch (e) {
-        // Silent fallback to deterministic keyword matcher
-        summarizer = null;
-      }
-    }
-    initBrowserAI();
-
-    /* =========================================================================
-       5. MULTI-PROXY RESILIENT FETCHER (Heuristic 9: Error Recovery)
-       ========================================================================= */
     async function fetchWithFallback(targetUrl) {
       const primaryProxy = document.getElementById("proxy-select").value;
       const allProxies = [
@@ -726,7 +672,6 @@
         "https://corsproxy.io/?",
         "https://api.codetabs.com/v1/proxy?quest="
       ];
-      // Deduplicate while keeping user's chosen proxy first
       const uniqueProxies = [...new Set(allProxies)];
 
       let lastErr = null;
@@ -745,9 +690,6 @@
       throw lastErr || new Error("All proxies blocked by target server.");
     }
 
-    /* =========================================================================
-       6. FEED LOADING & PRESET/CUSTOM FILTERING
-       ========================================================================= */
     window.loadFeed = async function() {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
@@ -880,14 +822,10 @@
       });
     }
 
-    /* =========================================================================
-       7. RECIPE EXTRACTION, SERVING SCALER & INTERACTIVE COOKING TOOLS
-       ========================================================================= */
     window.openRecipe = async function(encodedUrl, encodedTitle) {
       const url = decodeURIComponent(encodedUrl);
       const title = decodeURIComponent(encodedTitle);
 
-      // Check if already saved offline first (Instant load!)
       const offlineMatch = savedRecipes.find(r => r.link === url && r.ingredients && r.ingredients.length > 0);
       if (offlineMatch) {
         currentRecipe = offlineMatch;
@@ -924,21 +862,9 @@
         const ingredients = recipeData.recipeIngredient || [];
         const instructions = parseInstructions(recipeData.recipeInstructions || []);
 
-        // Generate YouTube Search Query
-        let searchQuery = `${title} recipe step by step tutorial`;
-        let engineLabel = "Keyword Matcher";
-
-        if (summarizer) {
-          try {
-            const prompt = `Recipe: ${title}\nWrite a 5-word YouTube cooking tutorial search query:`;
-            const out = await summarizer(prompt, { max_new_tokens: 14, temperature: 0.2 });
-            const cleaned = out?.[0]?.generated_text?.replace(prompt, "").trim().replace(/['"]/g, "");
-            if (cleaned && cleaned.length > 3) {
-              searchQuery = cleaned;
-              engineLabel = "In-Browser Local AI";
-            }
-          } catch (e) {}
-        }
+        // Instant local smart search query builder (Zero network requests)
+        const searchQuery = `${title} recipe step by step tutorial`;
+        const engineLabel = "Smart Local Matcher";
 
         currentRecipe = {
           title,
@@ -1012,7 +938,6 @@
               <button class="secondary" style="padding:0.25rem 0.6rem; font-size:0.78rem;" onclick="copyIngredients()">Copy</button>
             </div>
 
-            <!-- Serving Scaler (Heuristic 7: Flexibility & Efficiency) -->
             <div class="scaler-bar">
               <span>Scale:</span>
               ${[0.5, 1, 2, 3].map(mult => `
@@ -1044,7 +969,6 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    /* Ingredient Quantity Scaler (Pure local regex math) */
     function scaleIngredientText(line, factor) {
       if (factor === 1) return line;
       return line.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/, (match) => {
@@ -1111,9 +1035,6 @@
       clearFilters();
     };
 
-    /* =========================================================================
-       8. CONVENIENCE FEATURES: SAVED RECIPES, SHOPPING LIST, COOK MODE, TIMER
-       ========================================================================= */
     window.toggleSaveItem = function(encodedJson) {
       const item = JSON.parse(decodeURIComponent(encodedJson));
       const idx = savedRecipes.findIndex(r => r.link === item.link);
@@ -1231,7 +1152,6 @@
       }
     };
 
-    /* Recently Viewed Bar */
     function addToRecent(title, link) {
       recentHistory = recentHistory.filter(r => r.link !== link);
       recentHistory.unshift({ title, link });
@@ -1255,7 +1175,6 @@
       `).join("");
     }
 
-    /* Built-In Kitchen Timer with Web Audio Chime */
     let timerSeconds = 0;
     let timerInterval = null;
 
@@ -1321,7 +1240,6 @@
       updateTimerDisplay();
     };
 
-    /* Modals & Keyboard Shortcuts (Heuristic 4 & 7) */
     window.openHelpModal = () => document.getElementById("help-modal").style.display = "flex";
     window.closeModals = () => {
       document.getElementById("shopping-modal").style.display = "none";
@@ -1347,7 +1265,6 @@
       }
     });
 
-    /* Schema & ISO Duration Helpers */
     function findRecipeSchema(data) {
       if (!data) return null;
       if (Array.isArray(data)) {
@@ -1385,7 +1302,6 @@
       return (h + m).trim();
     }
 
-    // Initialize App
     updateCounters();
     loadFeed();
   </script>
