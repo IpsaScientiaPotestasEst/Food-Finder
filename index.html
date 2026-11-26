@@ -750,10 +750,12 @@
         showToast("Feed loaded successfully!", "success");
       } catch (err) {
         setProgress(100);
-        showStatusBanner(`
-          <strong>Notice:</strong> Publisher firewall blocked live RSS fetch. Automatically switched to <strong>Built-in Verified Demo Feed</strong> so all app features are fully operational!
-        `);
+        // Robust fallback assignment so app remains fully operational
         allFeedItems = DEMO_RECIPES;
+        showStatusBanner(`
+          <strong>Network Notice:</strong> Public proxies are currently blocking live RSS fetches from GitHub Pages. 
+          <span style="color:var(--muted);">Loaded <strong>4 Built-in Verified Demo Recipes</strong> so you can test filtering, scaling, shopping lists, and the timer instantly!</span>
+        `);
         applyFilter();
       }
     };
@@ -1212,7 +1214,6 @@
       `).join("");
     }
 
-    /* Dedicated Timer Page Navigation & Logic */
     let timerSeconds = 0;
     let timerInterval = null;
 
