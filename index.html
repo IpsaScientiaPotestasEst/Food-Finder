@@ -783,6 +783,65 @@
 
     // --- API ADAPTERS ---
 
+    async function fetchDummyJSON(query, skip = 0) {
+      const limit = 30;
+
+      let url;
+
+      if (query && query.trim()) {
+        url =
+          `https://dummyjson.com/recipes/search?q=${encodeURIComponent(query)}` +
+          `&limit=${limit}&skip=${skip}`;
+      } else {
+        url =
+          `https://dummyjson.com/recipes?limit=${limit}&skip=${skip}`;
+      }
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to load DummyJSON recipes.");
+
+      const data = await res.json();
+
+      dummySkip = skip + (data.recipes?.length || 0);
+      dummyTotal = data.total || 0;
+
+      return (data.recipes || []).map(recipe => {
+        const item = {
+          id: `dummy_${recipe.id}`,
+          source: "DummyJSON",
+          badgeClass: "dummy",
+
+          title: recipe.name,
+          image: recipe.image,
+          link: `https://dummyjson.com/recipes/${recipe.id}`,
+
+          summary:
+            `${recipe.cuisine || "Recipe"} • ` +
+            `${recipe.ingredients?.length || 0} ingredients`,
+
+          ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions || ["No instructions available."],
+
+          prepTime: recipe.prepTimeMinutes
+            ? `${recipe.prepTimeMinutes}m`
+            : "Unknown",
+
+          cookTime: recipe.cookTimeMinutes
+            ? `${recipe.cookTimeMinutes}m`
+            : "Unknown",
+
+          servings: recipe.servings
+            ? `${recipe.servings} servings`
+            : "Standard yield",
+
+          needsHydration: false
+        };
+
+        recipeCache.set(item.id, item);
+        return item;
+      });
+    }
+
     async function fetchTheMealDB(query, isCategory = false) {
       // Category filter still works for valid MealDB categories
       if (isCategory) {
@@ -802,14 +861,7 @@
         });
       }
 
-      // KEYWORD SEARCH: expand into individual terms, then hydrate via lookup.php.
-      // This turns "creamy chicken pasta" into chicken+pasta listings = 100+ meals,
-      // instead of search.php's near-empty exact-title match.
 
-      // KEYWORD SEARCH
-      // Pull broad recipe sets from categories, then perform local matching.
-      // This prevents searches like "raspberry pie" from missing desserts that
-      // don't contain an exact title match.
 
       const searchTerms = query
         .toLowerCase()
@@ -872,7 +924,7 @@
         }
       }
 
-      const MAX_HYDRATE = 60; // parallel lookup.php calls -> full ingredients + steps
+      const MAX_HYDRATE = merged.length;
       const hydrated = await Promise.all(merged.slice(0, MAX_HYDRATE).map(async m => {
         try {
           const r = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${m.idMeal}`);
@@ -942,7 +994,99 @@
       });
     }
 
+    async function fetchEdamam(query, nextHref = null) {
+      if (!apiKeys.edamamId || !apiKeys.edamamKey) return [];
+
+      let url;
+
+      if (nextHref) {
+        url = nextHref;
+      } else {
+        url =
+          `https://api.edamam.com/api/recipes/v2` +
+          `?type=public` +
+          `&q=${encodeURIComponent(query)}` +
+          `&app_id=${encodeURIComponent(apiKeys.edamamId)}` +
+          `&app_key=${encodeURIComponent(apiKeys.edamamKey)}`;
+      }
+
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        throw new Error(
+          `Edamam request failed (${res.status}). Check your App ID and App Key.`
+        );
+      }
+
+      const data = await res.json();
+
+      edamamNextHref =
+        data._links &&
+          data._links.next &&
+          data._links.next.href
+          ? data._links.next.href
+          : null;
+
+      return (data.hits || []).map(hit => {
+        const r = hit.recipe;
+
+        const item = {
+          id: `edamam_${btoa(r.uri).replace(/[^a-zA-Z0-9]/g, "")}`,
+
+          source: "Edamam",
+          badgeClass: "edamam",
+
+          title: r.label || "Recipe",
+
+          image: r.image || "",
+
+          link: r.url,
+
+          summary:
+            `${Math.round(r.calories || 0)} calories • ` +
+            `${(r.ingredientLines || []).length} ingredients`,
+
+          ingredients: r.ingredientLines || [],
+
+          instructions: [
+            "Full instructions are provided on the publisher's recipe page."
+          ],
+
+          prepTime: r.totalTime
+            ? `${r.totalTime}m`
+            : "Unknown",
+
+          cookTime: r.totalTime
+            ? `${r.totalTime}m`
+            : "Unknown",
+
+          servings: r.yield
+            ? `${r.yield} servings`
+            : "Standard yield",
+
+          publisherName: r.source || "Publisher",
+
+          isExternalInstructions: true,
+
+          searchQuery: query,
+
+          needsHydration: false
+        };
+
+        recipeCache.set(item.id, item);
+
+        return item;
+      });
+    }
+
     // --- UNIFIED DISPATCHER ---
+
+    function renderGrid(items) {
+      fullMasterPool = items || [];
+      displayedCount = 0;
+      document.getElementById("feed-grid").innerHTML = "";
+      renderNextBatch();
+    }
 
     window.executeRecipeQuery = async function (isCategoryMode = false) {
       const searchVal = document.getElementById("search-input").value.trim();
