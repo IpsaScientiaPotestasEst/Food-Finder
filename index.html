@@ -3,173 +3,335 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Static Open-Source Recipe & AI Video Pairer</title>
+  <title>FF (Food Finder)</title>
   <style>
     :root {
-      --bg: #f8f7f4;
+      --bg: #fafafa;
       --surface: #ffffff;
-      --text: #1f2421;
-      --muted: #5c6660;
-      --accent: #2d6a4f;
-      --accent-hover: #1b4332;
-      --border: #e2e0d8;
-      --radius: 10px;
+      --text: #111827;
+      --muted: #4b5563;
+      --border: #e5e7eb;
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --accent-bg: #f3f4f6;
+      --radius: 8px;
     }
+
     * { box-sizing: border-box; }
+    
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.5;
+      line-height: 1.6;
     }
+
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 1.25rem 2rem;
+      padding: 1rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    @media(min-width: 768px) {
+      header { flex-direction: row; justify-content: space-between; align-items: center; }
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.5rem;
       align-items: center;
-      justify-content: space-between;
     }
-    header h1 { margin: 0; font-size: 1.35rem; color: var(--accent); }
-    .controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
     select, input, button {
-      padding: 0.55rem 0.85rem;
-      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      background: var(--surface);
+      color: var(--text);
     }
+
+    input[type="text"] {
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    input[type="text"]:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    #custom-url-input {
+      display: none;
+      width: 220px;
+    }
+
     button {
-      background: var(--accent);
+      background: var(--primary);
       color: #fff;
       border: none;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 500;
+      transition: background 0.15s ease;
     }
-    button:hover { background: var(--accent-hover); }
-    main { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; }
+    button:hover { background: var(--primary-hover); }
+
+    main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1.25rem;
     }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.1rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      transition: transform 0.12s ease;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
     }
-    .card:hover { transform: translateY(-2px); }
-    .card h3 { margin: 0 0 0.5rem 0; font-size: 1.05rem; }
-    .card p { font-size: 0.88rem; color: var(--muted); margin: 0 0 1rem 0; }
-    .badge {
-      display: inline-block;
-      font-size: 0.75rem;
-      background: #e9f5ee;
-      color: var(--accent);
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      margin-bottom: 0.5rem;
+
+    .card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.05rem;
       font-weight: 600;
     }
+
+    .card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 1.25rem 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      background: var(--accent-bg);
+      color: var(--muted);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-bottom: 0.6rem;
+      font-weight: 500;
+    }
+
+    /* Detail View */
     #detail-view {
       display: none;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 2rem;
+      padding: 2.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     }
-    .back-btn { background: #495057; margin-bottom: 1.25rem; }
+
+    .back-btn {
+      background: var(--accent-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .back-btn:hover { background: #e5e7eb; }
+
     .detail-layout {
       display: grid;
       grid-template-columns: 1fr 1.2fr;
-      gap: 2rem;
-      margin-top: 1rem;
+      gap: 2.5rem;
+      margin-top: 1.5rem;
     }
-    @media (max-width: 820px) {
+
+    @media (max-width: 850px) {
       .detail-layout { grid-template-columns: 1fr; }
     }
+
     .ai-meta {
-      background: #f1f5f2;
+      background: var(--accent-bg);
       padding: 0.75rem 1rem;
-      border-radius: 6px;
+      border-radius: var(--radius);
       font-size: 0.85rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
     }
+
     ul.ingredients { padding-left: 1.2rem; }
-    ul.ingredients li { margin-bottom: 0.35rem; }
+    ul.ingredients li { margin-bottom: 0.4rem; font-size: 0.92rem; }
+
     ol.steps { padding-left: 1.2rem; }
-    ol.steps li { margin-bottom: 0.75rem; }
-    .status { text-align: center; padding: 2rem; color: var(--muted); }
+    ol.steps li { margin-bottom: 0.8rem; font-size: 0.92rem; }
+
+    /* Toast Notification System */
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+
+    .toast {
+      background: var(--text);
+      color: #fff;
+      padding: 0.75rem 1.2rem;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.error { background: #b91c1c; }
+    .toast.success { background: #047857; }
+
+    .status-msg {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+    }
   </style>
 
-  <!-- Load Transformers.js for in-browser AI -->
+  <!-- Transformers.js for optional in-browser AI -->
   <script type="module">
     import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
     window.transformersPipeline = pipeline;
   </script>
 </head>
 <body>
+
   <header>
-    <h1>Static OpenRecipe & AI Video Pairer</h1>
+    <h1>Recipe & Video Pairer</h1>
     <div class="controls">
-      <select id="feed-select">
-        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food (UK)</option>
+      <select id="feed-select" onchange="handleFeedChange()">
+        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food</option>
         <option value="https://www.seriouseats.com/recipes">Serious Eats</option>
         <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
+        <option value="custom">Custom Feed URL...</option>
       </select>
-      <input type="text" id="filter-input" placeholder="Filter recipes..." />
+      <input type="text" id="custom-url-input" placeholder="https://example.com/feed/" />
+      <input type="text" id="filter-input" placeholder="Filter feed items..." />
       <button onclick="loadFeed()">Load Feed</button>
     </div>
   </header>
 
   <main>
-    <div id="ai-status" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; text-align: center;">
-      In-Browser AI Status: Ready to load on demand.
-    </div>
-    <div id="status" class="status">Select a feed and click Load Feed.</div>
+    <div id="status" class="status-msg">Select a feed and click Load Feed to begin.</div>
     <div id="feed-grid" class="grid"></div>
     <div id="detail-view"></div>
   </main>
 
-  <script>
-    const CORS_PROXY = "https://api.allorigins.win/raw?url=";
-    let summarizer = null;
+  <div id="toast-container"></div>
 
+  <script>
+    let summarizer = null;
+    let aiLoaded = false;
+
+    // Toast utility
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => toast.classList.add("show"), 10);
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 200);
+      }, 3500);
+    }
+
+    function handleFeedChange() {
+      const select = document.getElementById("feed-select");
+      const customInput = document.getElementById("custom-url-input");
+      if (select.value === "custom") {
+        customInput.style.display = "block";
+        customInput.focus();
+      } else {
+        customInput.style.display = "none";
+      }
+    }
+
+    // Lazy load local browser AI model in background
     async function initAI() {
-      if (summarizer) return summarizer;
-      const aiStatus = document.getElementById("ai-status");
-      aiStatus.textContent = "Loading lightweight browser AI model (Qwen2.5-0.5B)... First load downloads ~300MB once.";
+      if (aiLoaded) return summarizer;
       try {
-        // Uses a small, fast instruction-tuned model running locally in WebAssembly/WebGPU
         summarizer = await window.transformersPipeline('text-generation', 'Xenova/Qwen2.5-0.5B-Instruct');
-        aiStatus.textContent = "In-Browser AI Model loaded successfully!";
+        aiLoaded = true;
+        showToast("In-browser AI model loaded successfully.", "success");
       } catch (e) {
-        aiStatus.textContent = "In-Browser AI skipped (falling back to keyword query builder).";
+        console.warn("Browser AI init skipped, using keyword fallback.", e);
       }
       return summarizer;
     }
+    // Kick off AI load quietly in background
+    initAI();
+
+    // Multi-proxy CORS robust fetcher
+    async function fetchWithProxy(targetUrl) {
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          const res = await fetch(proxyUrl);
+          if (res.ok) return await res.text();
+        } catch (e) {
+          continue;
+        }
+      }
+      throw new Error("All public CORS proxies failed to retrieve the feed.");
+    }
 
     async function loadFeed() {
-      const feedUrl = document.getElementById("feed-select").value;
+      const selectVal = document.getElementById("feed-select").value;
+      const customUrl = document.getElementById("custom-url-input").value.trim();
+      const feedUrl = selectVal === "custom" ? customUrl : selectVal;
       const filterQ = document.getElementById("filter-input").value.trim().toLowerCase();
+
+      if (selectVal === "custom" && !feedUrl) {
+        showToast("Please enter a valid custom RSS feed URL.", "error");
+        return;
+      }
 
       document.getElementById("detail-view").style.display = "none";
       const grid = document.getElementById("feed-grid");
       const status = document.getElementById("status");
       grid.innerHTML = "";
       status.style.display = "block";
-      status.textContent = "Fetching RSS feed via CORS proxy...";
+      status.textContent = "Fetching RSS feed...";
 
       try {
-        const res = await fetch(CORS_PROXY + encodeURIComponent(feedUrl));
-        const text = await res.text();
+        const text = await fetchWithProxy(feedUrl);
         const parser = new DOMParser();
         const xml = parser.parseFromString(text, "text/xml");
         const items = xml.querySelectorAll("item");
@@ -179,12 +341,12 @@
 
         items.forEach(item => {
           if (count >= 24) return;
-          const title = item.querySelector("title")?.textContent || "Untitled";
+          const title = item.querySelector("title")?.textContent || "Untitled Recipe";
           const link = item.querySelector("link")?.textContent || "";
           const descEl = item.querySelector("description")?.textContent || "";
           const cleanDesc = descEl.replace(/<[^>]*>?/gm, '');
 
-          if (filterQ && !title.toLowerCase().includes(filterQ) && !cleanDesc.toLowerCase().includes(cleanDesc)) {
+          if (filterQ && !title.toLowerCase().includes(filterQ) && !cleanDesc.toLowerCase().includes(filterQ)) {
             return;
           }
 
@@ -193,9 +355,9 @@
           card.className = "card";
           card.innerHTML = `
             <div>
-              <span class="badge">Recipe Feed</span>
+              <span class="badge">Feed Item</span>
               <h3>${title}</h3>
-              <p>${cleanDesc.substring(0, 150)}...</p>
+              <p>${cleanDesc || "No summary available."}</p>
             </div>
             <button onclick="openRecipe('${encodeURIComponent(link)}', '${encodeURIComponent(title)}')">Extract Recipe & Video</button>
           `;
@@ -206,9 +368,13 @@
         if (count === 0) {
           status.style.display = "block";
           status.textContent = "No items matched your filter.";
+        } else {
+          showToast(`Successfully loaded ${count} recipes.`, "success");
         }
       } catch (err) {
-        status.textContent = "Error fetching feed. Try a different source or check network connection.";
+        status.style.display = "block";
+        status.textContent = "Error fetching feed. Check the URL or CORS availability.";
+        showToast("Failed to load feed.", "error");
       }
     }
 
@@ -220,11 +386,10 @@
       document.getElementById("detail-view").style.display = "none";
       const status = document.getElementById("status");
       status.style.display = "block";
-      status.textContent = "Fetching recipe page and parsing JSON-LD schema...";
+      status.textContent = "Extracting structured JSON-LD recipe & pairing video...";
 
       try {
-        const res = await fetch(CORS_PROXY + encodeURIComponent(url));
-        const htmlText = await res.text();
+        const htmlText = await fetchWithProxy(url);
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, "text/html");
 
@@ -238,21 +403,27 @@
         });
 
         if (!recipeData) {
-          throw new Error("No structured JSON-LD recipe found on this page.");
+          throw new Error("No structured JSON-LD recipe found on this specific page.");
         }
 
         const ingredients = recipeData.recipeIngredient || [];
         const rawInstructions = recipeData.recipeInstructions || [];
         const instructions = parseInstructions(rawInstructions);
 
-        // Run local browser AI to create a smart YouTube search query
+        // Smart query generation (AI or fallback)
         let searchQuery = `${title} recipe cooking tutorial`;
-        const pipe = await initAI();
-        if (pipe) {
-          const prompt = `Recipe: ${title}\nWrite a 5-word YouTube cooking search query:`;
-          const output = await pipe(prompt, { max_new_tokens: 15, temperature: 0.3 });
-          if (output && output[0]?.generated_text) {
-            searchQuery = output[0].generated_text.replace(prompt, "").trim().replace(/['"]/g, "");
+        let engineUsed = "Keyword Matcher Fallback";
+        
+        if (summarizer) {
+          try {
+            const prompt = `Recipe: ${title}\nWrite a concise 5-word YouTube cooking search query:`;
+            const output = await summarizer(prompt, { max_new_tokens: 15, temperature: 0.3 });
+            if (output && output[0]?.generated_text) {
+              searchQuery = output[0].generated_text.replace(prompt, "").trim().replace(/['"]/g, "");
+              engineUsed = "In-Browser Local AI (Qwen2.5)";
+            }
+          } catch (e) {
+            console.warn("AI generation failed, using keyword fallback.");
           }
         }
 
@@ -266,32 +437,35 @@
           <p><a href="${url}" target="_blank" rel="noopener">View Original Source Page ↗</a></p>
 
           <div class="ai-meta">
-            <strong>AI Search Query Generated:</strong> <code>${searchQuery}</code>
+            <strong>Pairing Engine:</strong> ${engineUsed} &nbsp;|&nbsp;
+            <strong>Search Query:</strong> <code>${searchQuery}</code>
           </div>
 
           <div class="detail-layout">
             <div>
               <h3>Ingredients</h3>
               <ul class="ingredients">
-                ${ingredients.map(i => `<li>${i}</li>`).join("")}
+                ${ingredients.length > 0 ? ingredients.map(i => `<li>${i}</li>`).join("") : "<li>No structured ingredients found.</li>"}
               </ul>
             </div>
             <div>
-              <h3>YouTube Video Match</h3>
-              <p>Because YouTube blocks direct embeds without API keys, click below to open the AI-paired tutorial directly:</p>
-              <p><a href="${ytSearchUrl}" target="_blank" rel="noopener" style="font-weight: bold; font-size: 1.1rem; color: var(--accent);">Search & Watch on YouTube ↗</a></p>
+              <h3>Paired YouTube Tutorial</h3>
+              <p>Click below to open the exact AI-matched cooking tutorial on YouTube:</p>
+              <p><a href="${ytSearchUrl}" target="_blank" rel="noopener" style="font-weight: 600; color: var(--primary);">Watch "${searchQuery}" on YouTube ↗</a></p>
               
               <h3 style="margin-top: 2rem;">Instructions</h3>
               <ol class="steps">
-                ${instructions.map(s => `<li>${s}</li>`).join("")}
+                ${instructions.length > 0 ? instructions.map(s => `<li>${s}</li>`).join("") : "<li>No structured steps found.</li>"}
               </ol>
             </div>
           </div>
         `;
         detailEl.style.display = "block";
+        showToast("Recipe extracted successfully!", "success");
       } catch (err) {
         status.style.display = "block";
-        status.textContent = "Could not parse structured recipe data from this specific page link.";
+        status.textContent = "Could not parse structured recipe data from this link. Try another item.";
+        showToast("Extraction failed.", "error");
       }
     }
 
@@ -333,6 +507,9 @@
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("feed-grid").style.display = "grid";
     }
+
+    // Initial load on startup
+    loadFeed();
   </script>
 </body>
 </html>
