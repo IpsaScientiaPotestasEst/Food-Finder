@@ -3,99 +3,193 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FF (Food Finder)</title>
+  <title>Food Finder</title>
+  <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="" />
   <style>
     :root {
-      --bg: #fafafa;
+      --bg: #f9f9f8;
       --surface: #ffffff;
-      --text: #111827;
-      --muted: #4b5563;
-      --border: #e5e7eb;
-      --primary: #1e3a8a;
-      --primary-hover: #1e40af;
-      --accent-bg: #f3f4f6;
+      --text: #18181b;
+      --muted: #52525b;
+      --border: #e4e4e7;
+      --primary: #14532d;
+      --primary-hover: #166534;
+      --primary-soft: #f0fdf4;
+      --accent: #b45309;
+      --danger: #b91c1c;
       --radius: 8px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
     }
 
     * { box-sizing: border-box; }
-    
+
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: var(--font-sans);
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Progress Bar (Heuristic 1: Visibility of System Status) */
+    #top-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--primary);
+      z-index: 2000;
+      transition: width 0.25s ease, opacity 0.2s ease;
     }
 
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      max-width: 1200px;
+      margin: 0 auto;
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
       gap: 1rem;
     }
 
-    @media(min-width: 768px) {
-      header { flex-direction: row; justify-content: space-between; align-items: center; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      cursor: pointer;
     }
 
-    header h1 {
+    .brand h1 {
       margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       color: var(--text);
     }
 
-    .controls {
+    .header-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
       align-items: center;
     }
 
-    select, input, button {
-      padding: 0.5rem 0.75rem;
+    .toolbar {
+      max-width: 1200px;
+      margin: 0.85rem auto 0;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    select, input[type="text"], input[type="number"] {
+      padding: 0.48rem 0.75rem;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       font-size: 0.9rem;
       background: var(--surface);
       color: var(--text);
+      font-family: var(--font-sans);
     }
 
-    input[type="text"] {
-      outline: none;
-      transition: border-color 0.15s ease;
-    }
-    input[type="text"]:focus, select:focus {
-      border-color: var(--primary);
-    }
-
-    #custom-url-input {
-      display: none;
-      width: 220px;
+    select:focus, input:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: -1px;
     }
 
     button {
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
       background: var(--primary);
       color: #fff;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-      transition: background 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.15s ease, border-color 0.15s ease;
     }
+
     button:hover { background: var(--primary-hover); }
 
+    button.secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    button.secondary:hover { background: #f4f4f5; }
+
+    button.active-pill {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
     main {
-      max-width: 1100px;
-      margin: 2rem auto;
+      max-width: 1200px;
+      margin: 1.75rem auto;
       padding: 0 1.5rem;
     }
 
+    /* Recent History Strip (Heuristic 6: Recognition Rather Than Recall) */
+    #recent-bar {
+      display: none;
+      margin-bottom: 1.25rem;
+      padding: 0.6rem 0.9rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.84rem;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .recent-pill {
+      background: #f4f4f5;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .recent-pill:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* Status & Error Recovery Banner (Heuristic 9) */
+    #status-banner {
+      display: none;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius);
+    }
+    #status-banner.error { border-left-color: var(--danger); }
+
+    /* Recipe Grid */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
       gap: 1.25rem;
     }
 
@@ -103,17 +197,37 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.25rem;
+      padding: 1.35rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+      transition: border-color 0.15s ease;
+    }
+    .card:hover { border-color: #a1a1aa; }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #f4f4f5;
+      color: var(--muted);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
     }
 
     .card h3 {
       margin: 0 0 0.5rem 0;
-      font-size: 1.05rem;
-      font-weight: 600;
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      line-height: 1.35;
     }
 
     .card p {
@@ -126,270 +240,671 @@
       overflow: hidden;
     }
 
-    .badge {
-      display: inline-block;
-      font-size: 0.72rem;
-      background: var(--accent-bg);
-      color: var(--muted);
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      margin-bottom: 0.6rem;
-      font-weight: 500;
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
     }
+    .card-actions button:first-child { flex: 1; justify-content: center; }
 
-    /* Detail View */
+    /* Recipe Detail View */
     #detail-view {
       display: none;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 2.5rem;
-      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+      padding: 2.25rem;
     }
 
-    .back-btn {
-      background: var(--accent-bg);
-      color: var(--text);
-      border: 1px solid var(--border);
+    .detail-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.25rem;
       margin-bottom: 1.5rem;
     }
-    .back-btn:hover { background: #e5e7eb; }
+
+    .detail-title {
+      font-family: var(--font-serif);
+      font-size: 1.85rem;
+      margin: 0.5rem 0;
+      line-height: 1.25;
+    }
+
+    .detail-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .ai-meta {
+      background: var(--primary-soft);
+      border: 1px solid #bbf7d0;
+      padding: 0.85rem 1.1rem;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      margin-bottom: 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
     .detail-layout {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
+      grid-template-columns: 1fr 1.35fr;
       gap: 2.5rem;
-      margin-top: 1.5rem;
     }
-
     @media (max-width: 850px) {
       .detail-layout { grid-template-columns: 1fr; }
     }
 
-    .ai-meta {
-      background: var(--accent-bg);
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
+    /* Serving Scaler & Checklist */
+    .scaler-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
       font-size: 0.85rem;
-      margin-bottom: 1.25rem;
+      color: var(--muted);
+    }
+
+    .ingredient-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .ingredient-list li {
+      padding: 0.45rem 0;
+      border-bottom: 1px dashed var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      font-size: 0.94rem;
+      cursor: pointer;
+    }
+    .ingredient-list li.checked span {
+      text-decoration: line-through;
+      color: #a1a1aa;
+    }
+
+    /* Interactive Steps */
+    .step-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      counter-reset: step-counter;
+    }
+
+    .step-list li {
+      counter-increment: step-counter;
+      position: relative;
+      padding: 0.85rem 1rem 0.85rem 2.75rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .step-list li:hover { background: #fafafa; }
+    .step-list li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0.85rem;
+      top: 0.85rem;
+      width: 1.35rem;
+      height: 1.35rem;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.78rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .step-list li.done {
+      background: #f4f4f5;
+      color: #71717a;
+      text-decoration: line-through;
+    }
+    .step-list li.done::before { background: #a1a1aa; }
+
+    /* Cook Mode (Larger text for kitchen counter readability) */
+    body.cook-mode .ingredient-list li,
+    body.cook-mode .step-list li {
+      font-size: 1.2rem;
+      line-height: 1.75;
+    }
+
+    /* Floating Kitchen Timer Widget */
+    #timer-widget {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.88rem;
+    }
+    #timer-display {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 1.05rem;
+      min-width: 54px;
+    }
+
+    /* Drawers & Modals (Shopping List & Help) */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 1500;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      padding: 1.75rem;
+      max-height: 85vh;
+      overflow-y: auto;
       border: 1px solid var(--border);
     }
 
-    ul.ingredients { padding-left: 1.2rem; }
-    ul.ingredients li { margin-bottom: 0.4rem; font-size: 0.92rem; }
-
-    ol.steps { padding-left: 1.2rem; }
-    ol.steps li { margin-bottom: 0.8rem; font-size: 0.92rem; }
-
-    /* Toast Notification System */
+    /* Toast Notifications (Heuristic 1 & 3) */
     #toast-container {
       position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
+      bottom: 1.25rem;
+      right: 1.25rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      z-index: 1000;
+      z-index: 1600;
     }
-
     .toast {
-      background: var(--text);
+      background: #18181b;
       color: #fff;
-      padding: 0.75rem 1.2rem;
+      padding: 0.7rem 1.1rem;
       border-radius: var(--radius);
       font-size: 0.88rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.2s ease;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
+    .toast.error { background: var(--danger); }
+    .toast.success { background: var(--primary); }
+    .toast button {
+      background: rgba(255,255,255,0.2);
+      padding: 0.2rem 0.5rem;
+      font-size: 0.78rem;
     }
-    .toast.error { background: #b91c1c; }
-    .toast.success { background: #047857; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-    .status-msg {
-      text-align: center;
-      padding: 3rem;
-      color: var(--muted);
+    kbd {
+      background: #f4f4f5;
+      border: 1px solid #d4d4d8;
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.78rem;
+      font-family: monospace;
+    }
+
+    /* Clean Print Layout (On-site Feature) */
+    @media print {
+      header, #timer-widget, #toast-container, .detail-tools, .ai-meta, .back-btn, .scaler-bar {
+        display: none !important;
+      }
+      body { background: #fff; }
+      #detail-view { border: none; padding: 0; display: block !important; }
+      .detail-layout { grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
     }
   </style>
-
-  <!-- Transformers.js for optional in-browser AI -->
-  <script type="module">
-    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
-    window.transformersPipeline = pipeline;
-  </script>
 </head>
 <body>
 
+  <div id="top-progress"></div>
+
   <header>
-    <h1>Recipe & Video Pairer</h1>
-    <div class="controls">
-      <select id="feed-select" onchange="handleFeedChange()">
-        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food</option>
-        <option value="https://www.seriouseats.com/recipes">Serious Eats</option>
+    <div class="header-top">
+      <div class="brand" onclick="resetHome()" title="Return to main feed">
+        <span id="brand-icon"></span>
+        <h1>Food Finder</h1>
+      </div>
+
+      <div class="header-actions">
+        <button class="secondary" id="view-saved-btn" onclick="toggleSavedView()">
+          Saved Recipes (<span id="saved-count">0</span>)
+        </button>
+        <button class="secondary" onclick="openShoppingModal()">
+          Shopping List (<span id="shop-count">0</span>)
+        </button>
+        <button class="secondary" onclick="openHelpModal()" title="Keyboard Shortcuts & Guide (?)">
+          ? Guide
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <!-- Verified Feed Selector -->
+      <label for="feed-select" style="font-size:0.84rem; color:var(--muted);">Source:</label>
+      <select id="feed-select" onchange="loadFeed()">
         <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
-        <option value="custom">Custom Feed URL...</option>
+        <option value="https://minimalistbaker.com/feed/">Minimalist Baker</option>
+        <option value="https://www.seriouseats.com/recipes">Serious Eats</option>
+        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food</option>
       </select>
-      <input type="text" id="custom-url-input" placeholder="https://example.com/feed/" />
-      <input type="text" id="filter-input" placeholder="Filter feed items..." />
-      <button onclick="loadFeed()">Load Feed</button>
+
+      <!-- Preset + Custom Filter Dropdown (Heuristic 6: Recognition Rather Than Recall) -->
+      <label for="filter-preset" style="font-size:0.84rem; color:var(--muted);">Filter:</label>
+      <select id="filter-preset" onchange="handleFilterPresetChange()">
+        <option value="">All Recipes (No Filter)</option>
+        <option value="chicken">Chicken & Poultry</option>
+        <option value="pasta">Pasta & Noodles</option>
+        <option value="vegetarian">Vegetarian / Plant-Based</option>
+        <option value="soup">Soups & Stews</option>
+        <option value="beef">Beef & Pork</option>
+        <option value="salmon">Fish & Seafood</option>
+        <option value="salad">Salads & Bowls</option>
+        <option value="cake">Baking & Desserts</option>
+        <option value="custom">Custom filter keyword...</option>
+      </select>
+
+      <input type="text" id="custom-filter-input" placeholder="Type keyword (Press /)..." style="display:none; width:195px;" oninput="applyFilter()" />
+
+      <!-- CORS Proxy Selector for Error Recovery -->
+      <select id="proxy-select" title="Switch CORS proxy if a site blocks requests">
+        <option value="https://api.allorigins.win/raw?url=">Proxy: AllOrigins</option>
+        <option value="https://corsproxy.io/?">Proxy: Corsproxy.io</option>
+        <option value="https://api.codetabs.com/v1/proxy?quest=">Proxy: CodeTabs</option>
+      </select>
+
+      <button onclick="loadFeed()">Refresh Feed</button>
+      <button class="secondary" id="clear-filter-btn" style="display:none;" onclick="clearFilters()">Reset Filter</button>
     </div>
   </header>
 
   <main>
-    <div id="status" class="status-msg">Select a feed and click Load Feed to begin.</div>
+    <!-- Recently Viewed Bar -->
+    <div id="recent-bar">
+      <strong style="color:var(--muted);">Recently Viewed:</strong>
+      <div id="recent-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+    </div>
+
+    <!-- System Status & Error Recovery Banner -->
+    <div id="status-banner"></div>
+
+    <!-- Feed Grid -->
     <div id="feed-grid" class="grid"></div>
+
+    <!-- Recipe Detail View -->
     <div id="detail-view"></div>
   </main>
 
+  <!-- Floating Kitchen Timer (Zero-network Web Audio Chime) -->
+  <div id="timer-widget" title="Built-in Kitchen Timer">
+    <span>Timer:</span>
+    <span id="timer-display">00:00</span>
+    <button class="secondary" style="padding:0.25rem 0.5rem; font-size:0.78rem;" onclick="addTimerMinutes(5)">+5m</button>
+    <button class="secondary" style="padding:0.25rem 0.5rem; font-size:0.78rem;" onclick="addTimerMinutes(1)">+1m</button>
+    <button class="secondary" id="timer-toggle-btn" style="padding:0.25rem 0.5rem; font-size:0.78rem;" onclick="toggleTimer()">Start</button>
+    <button class="secondary" style="padding:0.25rem 0.5rem; font-size:0.78rem;" onclick="resetTimer()">Reset</button>
+  </div>
+
+  <!-- Shopping List Modal -->
+  <div id="shopping-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2 style="margin:0; font-family:var(--font-serif);">Shopping List</h2>
+        <button class="secondary" onclick="closeModals()">Close</button>
+      </div>
+      <div id="shopping-list-content"></div>
+      <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+        <button onclick="copyShoppingList()">Copy to Clipboard</button>
+        <button class="secondary" onclick="clearShoppingList()">Clear List</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help & Heuristics Guide Modal (Heuristic 10) -->
+  <div id="help-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
+        <button class="secondary" onclick="closeModals()">Close</button>
+      </div>
+      <p style="font-size:0.9rem; color:var(--muted);">Built with zero external API keys, zero tracking, and offline browser storage.</p>
+      <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
+        <li><kbd>/</kbd> — Focus the custom filter input immediately.</li>
+        <li><kbd>Esc</kbd> — Close recipe view or active modal dialogs.</li>
+        <li><kbd>?</kbd> — Open this help guide anytime.</li>
+        <li><strong>Serving Scaler:</strong> Multiply or divide ingredient amounts dynamically (<kbd>0.5x</kbd> to <kbd>3x</kbd>).</li>
+        <li><strong>Cook Mode:</strong> Enlarges recipe text and requests screen wake-lock while your hands are busy.</li>
+        <li><strong>Proxy Switcher:</strong> If a food site blocks one public proxy with a 403 error, switch proxies in the top toolbar and retry.</li>
+      </ul>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
-  <script>
-    let summarizer = null;
-    let aiLoaded = false;
+  <script type="module">
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
 
-    // Toast utility
-    function showToast(message, type = "info") {
+    /* =========================================================================
+       1. DYNAMIC CUSTOM FAVICON & BRAND ICON GENERATOR
+       ========================================================================= */
+    function generateDynamicFavicon(accentColor = "#14532d", badgeActive = false) {
+      const badgeSvg = badgeActive
+        ? `<circle cx="50" cy="14" r="10" fill="#d97706" stroke="#ffffff" stroke-width="3"/>`
+        : "";
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+          <rect width="64" height="64" rx="14" fill="${accentColor}"/>
+          <!-- Fork -->
+          <path d="M21 14v14c0 3.3 2.7 6 6 6v16h4V34c3.3 0 6-2.7 6-6V14h-3v11h-2V14h-3v11h-2V14h-3z" fill="#ffffff"/>
+          <!-- Spoon -->
+          <path d="M44 14c-3.3 0-6 3.6-6 8 0 3.5 1.8 6.5 4.3 7.6V50h3.4V29.6c2.5-1.1 4.3-4.1 4.3-7.6 0-4.4-2.7-8-6-8z" fill="#bbf7d0"/>
+          ${badgeSvg}
+        </svg>
+      `.trim();
+      const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
+      document.getElementById("dynamic-favicon").href = encoded;
+
+      const brandEl = document.getElementById("brand-icon");
+      if (brandEl) {
+        brandEl.innerHTML = `<img src="${encoded}" alt="Food Finder Icon" width="30" height="30" style="display:block; border-radius:6px;" />`;
+      }
+    }
+    generateDynamicFavicon();
+
+    /* =========================================================================
+       2. STATE MANAGEMENT & LOCAL STORAGE (Zero Extra Network Requests)
+       ========================================================================= */
+    let allFeedItems = [];
+    let currentRecipe = null;
+    let currentScale = 1;
+    let showingSavedOnly = false;
+    let wakeLock = null;
+    let summarizer = null;
+
+    let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
+    let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
+    let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
+
+    function updateCounters() {
+      document.getElementById("saved-count").textContent = savedRecipes.length;
+      document.getElementById("shop-count").textContent = shoppingList.length;
+      renderRecentBar();
+    }
+
+    /* =========================================================================
+       3. HEURISTIC 1 & 3: PROGRESS BAR & UNDO-CAPABLE TOASTS
+       ========================================================================= */
+    function setProgress(percent) {
+      const bar = document.getElementById("top-progress");
+      bar.style.opacity = percent > 0 ? "1" : "0";
+      bar.style.width = percent + "%";
+      if (percent >= 100) {
+        setTimeout(() => { bar.style.opacity = "0"; bar.style.width = "0%"; }, 350);
+      }
+    }
+
+    window.showToast = function(message, type = "info", undoCallback = null) {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
       toast.className = `toast ${type}`;
-      toast.textContent = message;
-      container.appendChild(toast);
+      
+      const span = document.createElement("span");
+      span.textContent = message;
+      toast.appendChild(span);
 
-      setTimeout(() => toast.classList.add("show"), 10);
-      setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => toast.remove(), 200);
-      }, 3500);
+      if (undoCallback) {
+        const undoBtn = document.createElement("button");
+        undoBtn.textContent = "Undo";
+        undoBtn.onclick = () => {
+          undoCallback();
+          toast.remove();
+        };
+        toast.appendChild(undoBtn);
+      }
+
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4200);
+    };
+
+    function showStatusBanner(htmlContent, isError = false) {
+      const banner = document.getElementById("status-banner");
+      banner.className = isError ? "error" : "";
+      banner.innerHTML = htmlContent;
+      banner.style.display = "block";
     }
 
-    function handleFeedChange() {
-      const select = document.getElementById("feed-select");
-      const customInput = document.getElementById("custom-url-input");
-      if (select.value === "custom") {
-        customInput.style.display = "block";
+    function hideStatusBanner() {
+      document.getElementById("status-banner").style.display = "none";
+    }
+
+    /* =========================================================================
+       4. OPTIONAL IN-BROWSER AI (Safe Background Init)
+       ========================================================================= */
+    async function initBrowserAI() {
+      try {
+        summarizer = await pipeline('text-generation', 'Xenova/Qwen2.5-0.5B-Instruct');
+      } catch (e) {
+        // Silent fallback to deterministic keyword matcher
+        summarizer = null;
+      }
+    }
+    initBrowserAI();
+
+    /* =========================================================================
+       5. MULTI-PROXY RESILIENT FETCHER (Heuristic 9: Error Recovery)
+       ========================================================================= */
+    async function fetchWithFallback(targetUrl) {
+      const primaryProxy = document.getElementById("proxy-select").value;
+      const allProxies = [
+        primaryProxy,
+        "https://api.allorigins.win/raw?url=",
+        "https://corsproxy.io/?",
+        "https://api.codetabs.com/v1/proxy?quest="
+      ];
+      // Deduplicate while keeping user's chosen proxy first
+      const uniqueProxies = [...new Set(allProxies)];
+
+      let lastErr = null;
+      for (const proxy of uniqueProxies) {
+        try {
+          const res = await fetch(proxy + encodeURIComponent(targetUrl));
+          if (res.ok) {
+            const text = await res.text();
+            if (text && text.length > 100) return text;
+          }
+          lastErr = new Error(`HTTP ${res.status}`);
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error("All proxies blocked by target server.");
+    }
+
+    /* =========================================================================
+       6. FEED LOADING & PRESET/CUSTOM FILTERING
+       ========================================================================= */
+    window.loadFeed = async function() {
+      showingSavedOnly = false;
+      document.getElementById("view-saved-btn").classList.remove("active-pill");
+      document.getElementById("detail-view").style.display = "none";
+      document.getElementById("feed-grid").style.display = "grid";
+
+      const feedUrl = document.getElementById("feed-select").value;
+      setProgress(25);
+      showStatusBanner("Fetching verified RSS feed...");
+
+      try {
+        const xmlText = await fetchWithFallback(feedUrl);
+        setProgress(70);
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(xmlText, "text/xml");
+        const items = Array.from(xml.querySelectorAll("item"));
+
+        if (items.length === 0) {
+          throw new Error("Feed returned no readable RSS items.");
+        }
+
+        allFeedItems = items.slice(0, 30).map(item => {
+          const title = item.querySelector("title")?.textContent?.trim() || "Untitled Recipe";
+          const link = item.querySelector("link")?.textContent?.trim() || "";
+          const rawDesc = item.querySelector("description")?.textContent || "";
+          const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, "").trim();
+          const pubDate = item.querySelector("pubDate")?.textContent || "";
+          return { title, link, summary: cleanDesc, pubDate };
+        });
+
+        hideStatusBanner();
+        setProgress(100);
+        applyFilter();
+      } catch (err) {
+        setProgress(100);
+        showStatusBanner(`
+          <strong>Unable to reach feed directly:</strong> ${err.message}.<br/>
+          <span style="font-size:0.88rem; color:var(--muted);">Some publishers block public CORS proxies. Try switching the Proxy dropdown above or selecting another verified feed.</span>
+          <div style="margin-top:0.75rem;">
+            <button onclick="switchProxyAndRetry()">Switch Proxy & Retry</button>
+          </div>
+        `, true);
+      }
+    };
+
+    window.switchProxyAndRetry = function() {
+      const sel = document.getElementById("proxy-select");
+      sel.selectedIndex = (sel.selectedIndex + 1) % sel.options.length;
+      showToast(`Switched to ${sel.options[sel.selectedIndex].text}`);
+      loadFeed();
+    };
+
+    window.handleFilterPresetChange = function() {
+      const preset = document.getElementById("filter-preset").value;
+      const customInput = document.getElementById("custom-filter-input");
+      if (preset === "custom") {
+        customInput.style.display = "inline-block";
         customInput.focus();
       } else {
         customInput.style.display = "none";
+        customInput.value = "";
       }
-    }
+      applyFilter();
+    };
 
-    // Lazy load local browser AI model in background
-    async function initAI() {
-      if (aiLoaded) return summarizer;
-      try {
-        summarizer = await window.transformersPipeline('text-generation', 'Xenova/Qwen2.5-0.5B-Instruct');
-        aiLoaded = true;
-        showToast("In-browser AI model loaded successfully.", "success");
-      } catch (e) {
-        console.warn("Browser AI init skipped, using keyword fallback.", e);
-      }
-      return summarizer;
-    }
-    // Kick off AI load quietly in background
-    initAI();
+    window.applyFilter = function() {
+      const preset = document.getElementById("filter-preset").value;
+      const customVal = document.getElementById("custom-filter-input").value.trim().toLowerCase();
+      const query = preset === "custom" ? customVal : preset.toLowerCase();
 
-    // Multi-proxy CORS robust fetcher
-    async function fetchWithProxy(targetUrl) {
-      const proxies = [
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
-      ];
+      const clearBtn = document.getElementById("clear-filter-btn");
+      clearBtn.style.display = query ? "inline-flex" : "none";
 
-      for (const proxyUrl of proxies) {
-        try {
-          const res = await fetch(proxyUrl);
-          if (res.ok) return await res.text();
-        } catch (e) {
-          continue;
-        }
-      }
-      throw new Error("All public CORS proxies failed to retrieve the feed.");
-    }
+      const sourceList = showingSavedOnly ? savedRecipes : allFeedItems;
+      const filtered = query
+        ? sourceList.filter(item =>
+            item.title.toLowerCase().includes(query) ||
+            (item.summary && item.summary.toLowerCase().includes(query))
+          )
+        : sourceList;
 
-    async function loadFeed() {
-      const selectVal = document.getElementById("feed-select").value;
-      const customUrl = document.getElementById("custom-url-input").value.trim();
-      const feedUrl = selectVal === "custom" ? customUrl : selectVal;
-      const filterQ = document.getElementById("filter-input").value.trim().toLowerCase();
+      renderGrid(filtered);
+    };
 
-      if (selectVal === "custom" && !feedUrl) {
-        showToast("Please enter a valid custom RSS feed URL.", "error");
-        return;
-      }
+    window.clearFilters = function() {
+      document.getElementById("filter-preset").value = "";
+      document.getElementById("custom-filter-input").style.display = "none";
+      document.getElementById("custom-filter-input").value = "";
+      applyFilter();
+      showToast("Filters cleared");
+    };
 
-      document.getElementById("detail-view").style.display = "none";
+    function renderGrid(items) {
       const grid = document.getElementById("feed-grid");
-      const status = document.getElementById("status");
       grid.innerHTML = "";
-      status.style.display = "block";
-      status.textContent = "Fetching RSS feed...";
 
-      try {
-        const text = await fetchWithProxy(feedUrl);
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
-        const items = xml.querySelectorAll("item");
-
-        grid.innerHTML = "";
-        let count = 0;
-
-        items.forEach(item => {
-          if (count >= 24) return;
-          const title = item.querySelector("title")?.textContent || "Untitled Recipe";
-          const link = item.querySelector("link")?.textContent || "";
-          const descEl = item.querySelector("description")?.textContent || "";
-          const cleanDesc = descEl.replace(/<[^>]*>?/gm, '');
-
-          if (filterQ && !title.toLowerCase().includes(filterQ) && !cleanDesc.toLowerCase().includes(filterQ)) {
-            return;
-          }
-
-          count++;
-          const card = document.createElement("div");
-          card.className = "card";
-          card.innerHTML = `
-            <div>
-              <span class="badge">Feed Item</span>
-              <h3>${title}</h3>
-              <p>${cleanDesc || "No summary available."}</p>
-            </div>
-            <button onclick="openRecipe('${encodeURIComponent(link)}', '${encodeURIComponent(title)}')">Extract Recipe & Video</button>
-          `;
-          grid.appendChild(card);
-        });
-
-        status.style.display = "none";
-        if (count === 0) {
-          status.style.display = "block";
-          status.textContent = "No items matched your filter.";
-        } else {
-          showToast(`Successfully loaded ${count} recipes.`, "success");
-        }
-      } catch (err) {
-        status.style.display = "block";
-        status.textContent = "Error fetching feed. Check the URL or CORS availability.";
-        showToast("Failed to load feed.", "error");
+      if (items.length === 0) {
+        showStatusBanner(`
+          No recipes matched your current filter. 
+          <button class="secondary" style="margin-left:0.5rem;" onclick="clearFilters()">Reset Filter</button>
+        `);
+        return;
+      } else {
+        hideStatusBanner();
       }
+
+      items.forEach(item => {
+        const isSaved = savedRecipes.some(s => s.link === item.link);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div>
+            <div class="card-meta">
+              <span class="badge">${showingSavedOnly ? "Saved Offline" : "Verified Feed"}</span>
+              <span style="font-size:0.78rem; color:var(--muted);">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ""}</span>
+            </div>
+            <h3>${item.title}</h3>
+            <p>${item.summary || "Click below to extract exact ingredients, cooking steps, and video walkthrough."}</p>
+          </div>
+          <div class="card-actions">
+            <button onclick="openRecipe('${encodeURIComponent(item.link)}', '${encodeURIComponent(item.title)}')">
+              Open Recipe
+            </button>
+            <button class="secondary" onclick="toggleSaveItem('${encodeURIComponent(JSON.stringify(item))}')" title="Bookmark recipe">
+              ${isSaved ? "Saved" : "Save"}
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
     }
 
-    async function openRecipe(encodedUrl, encodedTitle) {
+    /* =========================================================================
+       7. RECIPE EXTRACTION, SERVING SCALER & INTERACTIVE COOKING TOOLS
+       ========================================================================= */
+    window.openRecipe = async function(encodedUrl, encodedTitle) {
       const url = decodeURIComponent(encodedUrl);
       const title = decodeURIComponent(encodedTitle);
 
+      // Check if already saved offline first (Instant load!)
+      const offlineMatch = savedRecipes.find(r => r.link === url && r.ingredients && r.ingredients.length > 0);
+      if (offlineMatch) {
+        currentRecipe = offlineMatch;
+        currentScale = 1;
+        addToRecent(title, url);
+        renderRecipeDetail(offlineMatch, "Offline Cache");
+        return;
+      }
+
       document.getElementById("feed-grid").style.display = "none";
       document.getElementById("detail-view").style.display = "none";
-      const status = document.getElementById("status");
-      status.style.display = "block";
-      status.textContent = "Extracting structured JSON-LD recipe & pairing video...";
+      setProgress(30);
+      showStatusBanner(`Extracting exact JSON-LD recipe for <strong>${title}</strong>...`);
 
       try {
-        const htmlText = await fetchWithProxy(url);
+        const htmlText = await fetchWithFallback(url);
+        setProgress(75);
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlText, "text/html");
 
@@ -397,118 +912,481 @@
         doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
           try {
             const json = JSON.parse(script.textContent);
-            let found = findRecipeSchema(json);
+            const found = findRecipeSchema(json);
             if (found) recipeData = found;
-          } catch(e) {}
+          } catch (e) {}
         });
 
         if (!recipeData) {
-          throw new Error("No structured JSON-LD recipe found on this specific page.");
+          throw new Error("This link appears to be an editorial article rather than a single structured recipe.");
         }
 
         const ingredients = recipeData.recipeIngredient || [];
-        const rawInstructions = recipeData.recipeInstructions || [];
-        const instructions = parseInstructions(rawInstructions);
+        const instructions = parseInstructions(recipeData.recipeInstructions || []);
 
-        // Smart query generation (AI or fallback)
-        let searchQuery = `${title} recipe cooking tutorial`;
-        let engineUsed = "Keyword Matcher Fallback";
-        
+        // Generate YouTube Search Query
+        let searchQuery = `${title} recipe step by step tutorial`;
+        let engineLabel = "Keyword Matcher";
+
         if (summarizer) {
           try {
-            const prompt = `Recipe: ${title}\nWrite a concise 5-word YouTube cooking search query:`;
-            const output = await summarizer(prompt, { max_new_tokens: 15, temperature: 0.3 });
-            if (output && output[0]?.generated_text) {
-              searchQuery = output[0].generated_text.replace(prompt, "").trim().replace(/['"]/g, "");
-              engineUsed = "In-Browser Local AI (Qwen2.5)";
+            const prompt = `Recipe: ${title}\nWrite a 5-word YouTube cooking tutorial search query:`;
+            const out = await summarizer(prompt, { max_new_tokens: 14, temperature: 0.2 });
+            const cleaned = out?.[0]?.generated_text?.replace(prompt, "").trim().replace(/['"]/g, "");
+            if (cleaned && cleaned.length > 3) {
+              searchQuery = cleaned;
+              engineLabel = "In-Browser Local AI";
             }
-          } catch (e) {
-            console.warn("AI generation failed, using keyword fallback.");
-          }
+          } catch (e) {}
         }
 
-        const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+        currentRecipe = {
+          title,
+          link: url,
+          ingredients,
+          instructions,
+          searchQuery,
+          engineLabel,
+          prepTime: formatIsoDuration(recipeData.prepTime),
+          cookTime: formatIsoDuration(recipeData.cookTime),
+          servings: recipeData.recipeYield || ""
+        };
+        currentScale = 1;
 
-        status.style.display = "none";
-        const detailEl = document.getElementById("detail-view");
-        detailEl.innerHTML = `
-          <button class="back-btn" onclick="closeDetail()">← Back to Feed</button>
-          <h2>${title}</h2>
-          <p><a href="${url}" target="_blank" rel="noopener">View Original Source Page ↗</a></p>
-
-          <div class="ai-meta">
-            <strong>Pairing Engine:</strong> ${engineUsed} &nbsp;|&nbsp;
-            <strong>Search Query:</strong> <code>${searchQuery}</code>
-          </div>
-
-          <div class="detail-layout">
-            <div>
-              <h3>Ingredients</h3>
-              <ul class="ingredients">
-                ${ingredients.length > 0 ? ingredients.map(i => `<li>${i}</li>`).join("") : "<li>No structured ingredients found.</li>"}
-              </ul>
-            </div>
-            <div>
-              <h3>Paired YouTube Tutorial</h3>
-              <p>Click below to open the exact AI-matched cooking tutorial on YouTube:</p>
-              <p><a href="${ytSearchUrl}" target="_blank" rel="noopener" style="font-weight: 600; color: var(--primary);">Watch "${searchQuery}" on YouTube ↗</a></p>
-              
-              <h3 style="margin-top: 2rem;">Instructions</h3>
-              <ol class="steps">
-                ${instructions.length > 0 ? instructions.map(s => `<li>${s}</li>`).join("") : "<li>No structured steps found.</li>"}
-              </ol>
-            </div>
-          </div>
-        `;
-        detailEl.style.display = "block";
-        showToast("Recipe extracted successfully!", "success");
+        addToRecent(title, url);
+        hideStatusBanner();
+        setProgress(100);
+        renderRecipeDetail(currentRecipe, engineLabel);
       } catch (err) {
-        status.style.display = "block";
-        status.textContent = "Could not parse structured recipe data from this link. Try another item.";
-        showToast("Extraction failed.", "error");
+        setProgress(100);
+        showStatusBanner(`
+          <strong>Could not extract structured recipe:</strong> ${err.message}<br/>
+          <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+            <button class="secondary" onclick="closeDetail()">← Back to Feed</button>
+            <a href="${url}" target="_blank" rel="noopener"><button>Open Original Page ↗</button></a>
+          </div>
+        `, true);
       }
+    };
+
+    function renderRecipeDetail(recipe, engineLabel) {
+      document.getElementById("feed-grid").style.display = "none";
+      const detailEl = document.getElementById("detail-view");
+      const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.searchQuery)}`;
+      const isSaved = savedRecipes.some(s => s.link === recipe.link);
+
+      detailEl.innerHTML = `
+        <div class="detail-header">
+          <div>
+            <button class="secondary back-btn" onclick="closeDetail()">← Back to Feed (Esc)</button>
+            <h2 class="detail-title">${recipe.title}</h2>
+            <div style="font-size:0.86rem; color:var(--muted); display:flex; gap:1rem; flex-wrap:wrap;">
+              ${recipe.prepTime ? `<span><strong>Prep:</strong> ${recipe.prepTime}</span>` : ""}
+              ${recipe.cookTime ? `<span><strong>Cook:</strong> ${recipe.cookTime}</span>` : ""}
+              ${recipe.servings ? `<span><strong>Yield:</strong> ${Array.isArray(recipe.servings) ? recipe.servings[0] : recipe.servings}</span>` : ""}
+              <a href="${recipe.link}" target="_blank" rel="noopener" style="color:var(--primary);">Original Source ↗</a>
+            </div>
+          </div>
+
+          <div class="detail-tools">
+            <button class="secondary" onclick="saveFullRecipeOffline()">${isSaved ? "Saved Offline" : "Save Offline"}</button>
+            <button class="secondary" onclick="addAllToShoppingList()">+ Shopping List</button>
+            <button class="secondary" id="cook-mode-btn" onclick="toggleCookMode()">Cook Mode</button>
+            <button class="secondary" onclick="window.print()">Print Card</button>
+          </div>
+        </div>
+
+        <div class="ai-meta">
+          <div>
+            <strong>Video Pairing (${engineLabel}):</strong> <code>${recipe.searchQuery}</code>
+          </div>
+          <a href="${ytUrl}" target="_blank" rel="noopener">
+            <button>Watch Tutorial on YouTube ↗</button>
+          </a>
+        </div>
+
+        <div class="detail-layout">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+              <h3 style="margin:0; font-family:var(--font-serif);">Ingredients</h3>
+              <button class="secondary" style="padding:0.25rem 0.6rem; font-size:0.78rem;" onclick="copyIngredients()">Copy</button>
+            </div>
+
+            <!-- Serving Scaler (Heuristic 7: Flexibility & Efficiency) -->
+            <div class="scaler-bar">
+              <span>Scale:</span>
+              ${[0.5, 1, 2, 3].map(mult => `
+                <button class="secondary ${currentScale === mult ? 'active-pill' : ''}" 
+                        style="padding:0.2rem 0.55rem; font-size:0.78rem;"
+                        onclick="setScale(${mult})">${mult}x</button>
+              `).join("")}
+            </div>
+
+            <ul class="ingredient-list" id="rendered-ingredients">
+              ${renderScaledIngredientsHtml(recipe.ingredients, currentScale)}
+            </ul>
+          </div>
+
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+              <h3 style="margin:0; font-family:var(--font-serif);">Instructions</h3>
+              <span id="step-progress" style="font-size:0.82rem; color:var(--muted);">0 / ${recipe.instructions.length} completed</span>
+            </div>
+            <ol class="step-list">
+              ${recipe.instructions.map(step => `
+                <li onclick="toggleStepDone(this)">${step}</li>
+              `).join("")}
+            </ol>
+          </div>
+        </div>
+      `;
+      detailEl.style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    /* Ingredient Quantity Scaler (Pure local regex math) */
+    function scaleIngredientText(line, factor) {
+      if (factor === 1) return line;
+      return line.replace(/^(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/, (match) => {
+        let num = 0;
+        if (match.includes(" ")) {
+          const [whole, frac] = match.split(" ");
+          const [n, d] = frac.split("/");
+          num = parseFloat(whole) + parseFloat(n) / parseFloat(d);
+        } else if (match.includes("/")) {
+          const [n, d] = match.split("/");
+          num = parseFloat(n) / parseFloat(d);
+        } else {
+          num = parseFloat(match);
+        }
+        const scaled = Math.round(num * factor * 100) / 100;
+        return `<strong>${scaled}</strong>`;
+      });
+    }
+
+    function renderScaledIngredientsHtml(ingredients, factor) {
+      return ingredients.map(ing => `
+        <li onclick="this.classList.toggle('checked')">
+          <input type="checkbox" onclick="event.stopPropagation(); this.parentElement.classList.toggle('checked')" />
+          <span>${scaleIngredientText(ing, factor)}</span>
+        </li>
+      `).join("");
+    }
+
+    window.setScale = function(mult) {
+      currentScale = mult;
+      renderRecipeDetail(currentRecipe, currentRecipe.engineLabel);
+      showToast(`Scaled ingredients to ${mult}x`);
+    };
+
+    window.toggleStepDone = function(liEl) {
+      liEl.classList.toggle("done");
+      const all = document.querySelectorAll(".step-list li").length;
+      const done = document.querySelectorAll(".step-list li.done").length;
+      document.getElementById("step-progress").textContent = `${done} / ${all} completed`;
+      if (done === all && all > 0) {
+        showToast("All cooking steps completed!", "success");
+      }
+    };
+
+    window.copyIngredients = function() {
+      if (!currentRecipe) return;
+      const text = currentRecipe.ingredients.join("\n");
+      navigator.clipboard.writeText(text);
+      showToast("Ingredients copied to clipboard", "success");
+    };
+
+    window.closeDetail = function() {
+      document.getElementById("detail-view").style.display = "none";
+      document.getElementById("feed-grid").style.display = "grid";
+      if (document.body.classList.contains("cook-mode")) {
+        toggleCookMode();
+      }
+    };
+
+    window.resetHome = function() {
+      showingSavedOnly = false;
+      document.getElementById("view-saved-btn").classList.remove("active-pill");
+      closeDetail();
+      clearFilters();
+    };
+
+    /* =========================================================================
+       8. CONVENIENCE FEATURES: SAVED RECIPES, SHOPPING LIST, COOK MODE, TIMER
+       ========================================================================= */
+    window.toggleSaveItem = function(encodedJson) {
+      const item = JSON.parse(decodeURIComponent(encodedJson));
+      const idx = savedRecipes.findIndex(r => r.link === item.link);
+      if (idx > -1) {
+        const removed = savedRecipes.splice(idx, 1)[0];
+        localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
+        updateCounters();
+        applyFilter();
+        showToast("Removed from Saved Recipes", "info", () => {
+          savedRecipes.push(removed);
+          localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
+          updateCounters();
+          applyFilter();
+        });
+      } else {
+        savedRecipes.unshift(item);
+        localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
+        updateCounters();
+        applyFilter();
+        showToast("Recipe saved!", "success");
+      }
+    };
+
+    window.saveFullRecipeOffline = function() {
+      if (!currentRecipe) return;
+      const idx = savedRecipes.findIndex(r => r.link === currentRecipe.link);
+      if (idx > -1) {
+        savedRecipes[idx] = currentRecipe;
+      } else {
+        savedRecipes.unshift(currentRecipe);
+      }
+      localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
+      updateCounters();
+      renderRecipeDetail(currentRecipe, currentRecipe.engineLabel);
+      showToast("Full recipe saved for offline viewing!", "success");
+    };
+
+    window.toggleSavedView = function() {
+      showingSavedOnly = !showingSavedOnly;
+      const btn = document.getElementById("view-saved-btn");
+      btn.classList.toggle("active-pill", showingSavedOnly);
+      document.getElementById("detail-view").style.display = "none";
+      document.getElementById("feed-grid").style.display = "grid";
+      applyFilter();
+    };
+
+    window.addAllToShoppingList = function() {
+      if (!currentRecipe) return;
+      shoppingList.push(...currentRecipe.ingredients);
+      localStorage.setItem("ff_shopping_list", JSON.stringify(shoppingList));
+      updateCounters();
+      showToast(`Added ${currentRecipe.ingredients.length} items to Shopping List`, "success");
+    };
+
+    window.openShoppingModal = function() {
+      const container = document.getElementById("shopping-list-content");
+      if (shoppingList.length === 0) {
+        container.innerHTML = `<p style="color:var(--muted);">Your shopping list is empty. Open any recipe and click <strong>+ Shopping List</strong>.</p>`;
+      } else {
+        container.innerHTML = `<ul class="ingredient-list">${shoppingList.map((item, i) => `
+          <li onclick="this.classList.toggle('checked')">
+            <input type="checkbox" />
+            <span style="flex:1;">${item}</span>
+            <button class="secondary" style="padding:0.1rem 0.45rem; font-size:0.75rem;" onclick="event.stopPropagation(); removeShopItem(${i})">✕</button>
+          </li>
+        `).join("")}</ul>`;
+      }
+      document.getElementById("shopping-modal").style.display = "flex";
+    };
+
+    window.removeShopItem = function(index) {
+      shoppingList.splice(index, 1);
+      localStorage.setItem("ff_shopping_list", JSON.stringify(shoppingList));
+      updateCounters();
+      openShoppingModal();
+    };
+
+    window.copyShoppingList = function() {
+      navigator.clipboard.writeText(shoppingList.join("\n"));
+      showToast("Shopping list copied to clipboard", "success");
+    };
+
+    window.clearShoppingList = function() {
+      const backup = [...shoppingList];
+      shoppingList = [];
+      localStorage.setItem("ff_shopping_list", "[]");
+      updateCounters();
+      openShoppingModal();
+      showToast("Shopping list cleared", "info", () => {
+        shoppingList = backup;
+        localStorage.setItem("ff_shopping_list", JSON.stringify(shoppingList));
+        updateCounters();
+        openShoppingModal();
+      });
+    };
+
+    window.toggleCookMode = async function() {
+      const active = document.body.classList.toggle("cook-mode");
+      const btn = document.getElementById("cook-mode-btn");
+      if (btn) btn.classList.toggle("active-pill", active);
+      generateDynamicFavicon("#14532d", active);
+
+      if (active) {
+        showToast("Cook Mode ON: Larger text enabled", "success");
+        try {
+          if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+          }
+        } catch (e) {}
+      } else {
+        if (wakeLock) {
+          wakeLock.release();
+          wakeLock = null;
+        }
+      }
+    };
+
+    /* Recently Viewed Bar */
+    function addToRecent(title, link) {
+      recentHistory = recentHistory.filter(r => r.link !== link);
+      recentHistory.unshift({ title, link });
+      recentHistory = recentHistory.slice(0, 5);
+      localStorage.setItem("ff_recent_history", JSON.stringify(recentHistory));
+      renderRecentBar();
+    }
+
+    function renderRecentBar() {
+      const bar = document.getElementById("recent-bar");
+      const list = document.getElementById("recent-list");
+      if (recentHistory.length === 0) {
+        bar.style.display = "none";
+        return;
+      }
+      bar.style.display = "flex";
+      list.innerHTML = recentHistory.map(r => `
+        <span class="recent-pill" onclick="openRecipe('${encodeURIComponent(r.link)}', '${encodeURIComponent(r.title)}')">
+          ${r.title.length > 32 ? r.title.slice(0, 32) + "..." : r.title}
+        </span>
+      `).join("");
+    }
+
+    /* Built-In Kitchen Timer with Web Audio Chime */
+    let timerSeconds = 0;
+    let timerInterval = null;
+
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 1.2);
+      } catch (e) {}
+    }
+
+    function updateTimerDisplay() {
+      const m = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+      const s = String(timerSeconds % 60).padStart(2, "0");
+      document.getElementById("timer-display").textContent = `${m}:${s}`;
+    }
+
+    window.addTimerMinutes = function(mins) {
+      timerSeconds += mins * 60;
+      updateTimerDisplay();
+    };
+
+    window.toggleTimer = function() {
+      const btn = document.getElementById("timer-toggle-btn");
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        btn.textContent = "Start";
+        generateDynamicFavicon("#14532d", false);
+      } else {
+        if (timerSeconds <= 0) timerSeconds = 300;
+        btn.textContent = "Pause";
+        generateDynamicFavicon("#14532d", true);
+        timerInterval = setInterval(() => {
+          timerSeconds--;
+          updateTimerDisplay();
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            btn.textContent = "Start";
+            generateDynamicFavicon("#14532d", false);
+            playChime();
+            showToast("Kitchen Timer Finished!", "success");
+          }
+        }, 1000);
+      }
+    };
+
+    window.resetTimer = function() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerSeconds = 0;
+      document.getElementById("timer-toggle-btn").textContent = "Start";
+      generateDynamicFavicon("#14532d", false);
+      updateTimerDisplay();
+    };
+
+    /* Modals & Keyboard Shortcuts (Heuristic 4 & 7) */
+    window.openHelpModal = () => document.getElementById("help-modal").style.display = "flex";
+    window.closeModals = () => {
+      document.getElementById("shopping-modal").style.display = "none";
+      document.getElementById("help-modal").style.display = "none";
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") {
+        if (e.key === "Escape") e.target.blur();
+        return;
+      }
+      if (e.key === "/") {
+        e.preventDefault();
+        document.getElementById("filter-preset").value = "custom";
+        handleFilterPresetChange();
+      } else if (e.key === "?") {
+        openHelpModal();
+      } else if (e.key === "Escape") {
+        closeModals();
+        if (document.getElementById("detail-view").style.display === "block") {
+          closeDetail();
+        }
+      }
+    });
+
+    /* Schema & ISO Duration Helpers */
     function findRecipeSchema(data) {
       if (!data) return null;
       if (Array.isArray(data)) {
-        for (let item of data) {
-          let res = findRecipeSchema(item);
-          if (res) return res;
+        for (const item of data) {
+          const found = findRecipeSchema(item);
+          if (found) return found;
         }
-      } else if (typeof data === 'object') {
-        let type = data["@type"];
-        if (type === "Recipe" || (Array.isArray(type) && type.includes("Recipe"))) {
-          return data;
-        }
-        if (data["@graph"]) {
-          return findRecipeSchema(data["@graph"]);
-        }
+      } else if (typeof data === "object") {
+        const type = data["@type"];
+        if (type === "Recipe" || (Array.isArray(type) && type.includes("Recipe"))) return data;
+        if (data["@graph"]) return findRecipeSchema(data["@graph"]);
       }
       return null;
     }
 
     function parseInstructions(raw) {
-      let steps = [];
-      if (typeof raw === 'string') return [raw];
+      const steps = [];
+      if (typeof raw === "string") return [raw];
       if (Array.isArray(raw)) {
         raw.forEach(item => {
-          if (typeof item === 'string') steps.push(item);
-          else if (item.text) steps.push(item.text);
-          else if (item.itemListElement) {
-            steps.push(...parseInstructions(item.itemListElement));
-          }
+          if (typeof item === "string") steps.push(item);
+          else if (item.text) steps.push(item.text.replace(/<[^>]*>?/gm, "").trim());
+          else if (item.itemListElement) steps.push(...parseInstructions(item.itemListElement));
         });
       }
       return steps;
     }
 
-    function closeDetail() {
-      document.getElementById("detail-view").style.display = "none";
-      document.getElementById("feed-grid").style.display = "grid";
+    function formatIsoDuration(iso) {
+      if (!iso || typeof iso !== "string") return "";
+      const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+      if (!match) return iso;
+      const h = match[1] ? `${match[1]}h ` : "";
+      const m = match[2] ? `${match[2]}m` : "";
+      return (h + m).trim();
     }
 
-    // Initial load on startup
+    // Initialize App
+    updateCounters();
     loadFeed();
   </script>
 </body>
