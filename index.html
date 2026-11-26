@@ -97,7 +97,7 @@
       align-items: center;
     }
 
-    select, input[type="text"], input[type="number"] {
+    select, input[type="text"], input[type="password"], input[type="number"] {
       padding: 0.48rem 0.75rem;
       border-radius: var(--radius);
       border: 1px solid var(--border);
@@ -174,7 +174,7 @@
 
     #status-banner {
       display: none;
-      padding: 1.25rem;
+      padding: 1.15rem;
       margin-bottom: 1.5rem;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -208,6 +208,21 @@
       background: #f4f4f5;
     }
 
+    .card-placeholder {
+      width: 100%;
+      height: 120px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #e4e4e7 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 1rem;
+      text-align: center;
+    }
+
     .card-body {
       padding: 1.25rem;
       display: flex;
@@ -221,6 +236,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 0.5rem;
+      gap: 0.4rem;
     }
 
     .badge {
@@ -233,6 +249,10 @@
       border-radius: 4px;
       font-weight: 600;
     }
+
+    .badge.edamam { background: #ecfdf5; color: #047857; }
+    .badge.ninjas { background: #fef3c7; color: #b45309; }
+    .badge.dummy { background: #eff6ff; color: #1d4ed8; }
 
     .card h3 {
       margin: 0 0 0.5rem 0;
@@ -247,6 +267,12 @@
       margin-top: 1rem;
     }
     .card-actions button:first-child { flex: 1; justify-content: center; }
+
+    #pagination-bar {
+      display: none;
+      justify-content: center;
+      margin: 2rem 0;
+    }
 
     #detail-view {
       display: none;
@@ -412,12 +438,25 @@
     .modal-card {
       background: var(--surface);
       border-radius: var(--radius);
-      max-width: 520px;
+      max-width: 540px;
       width: 100%;
       padding: 1.75rem;
       max-height: 85vh;
       overflow-y: auto;
       border: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .form-group input {
+      width: 100%;
     }
 
     #toast-container {
@@ -483,9 +522,10 @@
       </div>
 
       <div class="header-actions">
+        <button class="secondary" onclick="openKeysModal()">API Keys</button>
         <button class="secondary" onclick="openTimerPage()">Set a Timer</button>
         <button class="secondary" id="view-saved-btn" onclick="toggleSavedView()">
-          Saved Recipes (<span id="saved-count">0</span>)
+          Saved (<span id="saved-count">0</span>)
         </button>
         <button class="secondary" onclick="openShoppingModal()">
           Shopping List (<span id="shop-count">0</span>)
@@ -497,6 +537,15 @@
     </div>
 
     <div class="toolbar" id="main-toolbar">
+      <label for="source-select" style="font-size:0.84rem; color:var(--muted);">Database:</label>
+      <select id="source-select" onchange="handleSourceChange()">
+        <option value="all_active">All Active Sources (Blended)</option>
+        <option value="themealdb">TheMealDB (Keyless • Full Steps)</option>
+        <option value="dummyjson">DummyJSON (Keyless • Global)</option>
+        <option value="edamam">Edamam (2M+ Recipes • Key)</option>
+        <option value="apininjas">API Ninjas (125k+ Recipes • Key)</option>
+      </select>
+
       <label for="category-select" style="font-size:0.84rem; color:var(--muted);">Category:</label>
       <select id="category-select" onchange="loadRecipesByCategory()">
         <option value="Chicken">Chicken</option>
@@ -510,13 +559,12 @@
         <option value="Side">Side</option>
       </select>
 
-      <input type="text" id="search-input" placeholder="Search recipes (e.g. raspberry, pie, curry)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') searchApiRecipes()" />
-      <button onclick="searchApiRecipes()">Search</button>
-      <button class="secondary" onclick="loadRecipesByCategory()">Reset</button>
+      <input type="text" id="search-input" placeholder="Search 2M+ recipes (e.g. ramen, tiramisu, tacos)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') executeRecipeQuery()" />
+      <button onclick="executeRecipeQuery()">Search</button>
+      <button class="secondary" onclick="resetHome()">Reset</button>
     </div>
   </header>
-
-  <main>
+<main>
     <div id="recent-bar">
       <strong style="color:var(--muted);">Recently Viewed:</strong>
       <div id="recent-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
@@ -524,6 +572,9 @@
 
     <div id="status-banner"></div>
     <div id="feed-grid" class="grid"></div>
+    <div id="pagination-bar">
+      <button class="secondary" id="load-more-btn" onclick="loadNextPage()">Load More Recipes</button>
+    </div>
     <div id="detail-view"></div>
 
     <div id="timer-view">
@@ -547,6 +598,41 @@
     </div>
   </main>
 
+  <!-- API Keys Configuration Modal -->
+  <div id="keys-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <h2 style="margin:0; font-family:var(--font-serif);">Massive Database API Keys</h2>
+        <button class="secondary" onclick="closeModals()">Close</button>
+      </div>
+      <p style="font-size:0.86rem; color:var(--muted); margin-top:0;">
+        Add optional free developer keys below to unlock over 2.1 million recipes. Keys are stored locally in your browser.
+      </p>
+
+      <div class="form-group">
+        <label for="edamam-id-input">Edamam Recipe Search App ID (2M+ Recipes)</label>
+        <input type="text" id="edamam-id-input" placeholder="e.g. a1b2c3d4" />
+      </div>
+      <div class="form-group">
+        <label for="edamam-key-input">Edamam Recipe Search App Key</label>
+        <input type="password" id="edamam-key-input" placeholder="e.g. 9f8e7d6c5b4a3f2e1d0c..." />
+      </div>
+
+      <hr style="border:0; border-top:1px solid var(--border); margin:1.25rem 0;" />
+
+      <div class="form-group">
+        <label for="ninjas-key-input">API Ninjas Key (125,000+ Structured Recipes)</label>
+        <input type="password" id="ninjas-key-input" placeholder="Your X-Api-Key from api-ninjas.com" />
+      </div>
+
+      <div style="display:flex; gap:0.5rem; margin-top:1.25rem;">
+        <button onclick="saveApiKeys()">Save Keys & Refresh</button>
+        <button class="secondary" onclick="clearApiKeys()">Clear Keys</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shopping List Modal -->
   <div id="shopping-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
@@ -561,137 +647,321 @@
     </div>
   </div>
 
+  <!-- Help Modal -->
   <div id="help-modal" class="modal-backdrop" onclick="if(event.target===this) closeModals()">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
-      <p style="font-size:0.9rem; color:var(--muted);">Zero-auth, open-source recipe index powered by public wildcard search engines.</p>
+      <p style="font-size:0.9rem; color:var(--muted);">Multi-database recipe aggregator capped at 20 cards per batch for instant UI performance.</p>
       <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
         <li><kbd>/</kbd> — Focus search input instantly.</li>
         <li><kbd>Esc</kbd> — Close active modal or recipe detail view.</li>
         <li><kbd>?</kbd> — Open this help guide anytime.</li>
+        <li><strong>Database Selector:</strong> Switch between keyless databases (TheMealDB, DummyJSON) or add free API keys for Edamam & API Ninjas.</li>
         <li><strong>Serving Scaler:</strong> Multiply or divide ingredient amounts dynamically (<kbd>0.5x</kbd> to <kbd>3x</kbd>).</li>
-        <li><strong>Cook Mode:</strong> Enlarges text and activates wake lock.</li>
       </ul>
     </div>
   </div>
 
   <div id="toast-container"></div>
+<script>
+    const PAGE_SIZE = 20;
+    let allFeedItems = [];
+    let recipeCache = new Map();
+    let currentRecipe = null;
+    let currentScale = 1;
+    let showingSavedOnly = false;
+    let wakeLock = null;
 
-  <script>
-    window.loadRecipesByCategory = async function() {
+    // Pagination state
+    let edamamNextHref = null;
+    let dummySkip = 0;
+    let dummyTotal = 0;
+    let lastActiveQuery = "Chicken";
+
+    // Stored credentials & user lists
+    let apiKeys = JSON.parse(localStorage.getItem("ff_api_keys") || '{"edamamId":"","edamamKey":"","ninjasKey":""}');
+    let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
+    let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
+    let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
+
+    // --- API ADAPTERS ---
+
+    async function fetchTheMealDB(query, isCategory = false) {
+      const url = isCategory
+        ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(query)}`
+        : `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.meals) return [];
+
+      return data.meals.slice(0, PAGE_SIZE).map(m => {
+        const item = {
+          id: `mealdb_${m.idMeal}`,
+          rawId: m.idMeal,
+          source: "TheMealDB",
+          badgeClass: "",
+          title: m.strMeal,
+          image: m.strMealThumb,
+          link: `https://www.themealdb.com/meal/${m.idMeal}`,
+          summary: m.strInstructions
+            ? m.strInstructions.slice(0, 125) + "..."
+            : `${m.strArea || "International"} ${m.strCategory || query} recipe with step-by-step instructions.`,
+          needsHydration: !m.strInstructions
+        };
+        if (!item.needsHydration) {
+          const ingredients = [];
+          for (let i = 1; i <= 20; i++) {
+            const ing = m[`strIngredient${i}`];
+            const measure = m[`strMeasure${i}`];
+            if (ing && ing.trim()) ingredients.push(`${measure ? measure.trim() + " " : ""}${ing.trim()}`);
+          }
+          item.ingredients = ingredients;
+          item.instructions = m.strInstructions.split(/\r?\n/).filter(s => s.trim().length > 0);
+          item.youtube = m.strYoutube || "";
+          item.prepTime = "15m";
+          item.cookTime = "25m";
+          item.servings = "4 servings";
+        }
+        recipeCache.set(item.id, item);
+        return item;
+      });
+    }
+
+    async function fetchDummyJSON(query, skip = 0) {
+      const url = `https://dummyjson.com/recipes/search?q=${encodeURIComponent(query)}&limit=${PAGE_SIZE}&skip=${skip}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      dummyTotal = data.total || 0;
+      dummySkip = skip + (data.recipes ? data.recipes.length : 0);
+
+      return (data.recipes || []).map(r => {
+        const item = {
+          id: `dummy_${r.id}`,
+          source: "DummyJSON",
+          badgeClass: "dummy",
+          title: r.name,
+          image: r.image,
+          link: `https://dummyjson.com/recipes/${r.id}`,
+          summary: `${r.cuisine} • ${r.difficulty} • ${r.caloriesPerServing} kcal/serving`,
+          ingredients: r.ingredients || [],
+          instructions: r.instructions || [],
+          prepTime: `${r.prepTimeMinutes || 15}m`,
+          cookTime: `${r.cookTimeMinutes || 20}m`,
+          servings: `${r.servings || 4} servings`,
+          needsHydration: false
+        };
+        recipeCache.set(item.id, item);
+        return item;
+      });
+    }
+
+    async function fetchEdamam(query, nextUrl = null) {
+      if (!apiKeys.edamamId || !apiKeys.edamamKey) return [];
+      const url = nextUrl || `https://api.edamam.com/api/recipes/v2?type=public&q=${encodeURIComponent(query)}&app_id=${encodeURIComponent(apiKeys.edamamId)}&app_key=${encodeURIComponent(apiKeys.edamamKey)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Edamam API rejected request. Check your App ID & Key.");
+      const data = await res.json();
+
+      edamamNextHref = data._links && data._links.next ? data._links.next.href : null;
+
+      return (data.hits || []).slice(0, PAGE_SIZE).map((hit, idx) => {
+        const r = hit.recipe;
+        const hash = r.uri.split("#recipe_")[1] || `${Date.now()}_${idx}`;
+        const perServingCal = r.yield ? Math.round(r.calories / r.yield) : Math.round(r.calories);
+        const item = {
+          id: `edamam_${hash}`,
+          source: "Edamam",
+          badgeClass: "edamam",
+          title: r.label,
+          image: r.image,
+          link: r.url,
+          summary: `${(r.cuisineType && r.cuisineType[0]) || "Global"} • ${perServingCal} kcal/serving • Source: ${r.source}`,
+          ingredients: r.ingredientLines || [],
+          instructions: [
+            `This recipe is indexed from ${r.source}. All ${r.ingredientLines.length} ingredients are scaled and ready on the left.`,
+            `Click "View Full Publisher Directions ↗" above to follow the original step-by-step preparation guide.`
+          ],
+          prepTime: r.totalTime ? `${r.totalTime}m total` : "Varies",
+          cookTime: "See source",
+          servings: `${r.yield || 4} servings`,
+          isExternalInstructions: true,
+          publisherName: r.source,
+          needsHydration: false
+        };
+        recipeCache.set(item.id, item);
+        return item;
+      });
+    }
+
+    async function fetchApiNinjas(query) {
+      if (!apiKeys.ninjasKey) return [];
+      const url = `https://api.api-ninjas.com/v1/recipe?query=${encodeURIComponent(query)}`;
+      const res = await fetch(url, {
+        headers: { "X-Api-Key": apiKeys.ninjasKey }
+      });
+      if (!res.ok) throw new Error("API Ninjas rejected request. Verify your X-Api-Key.");
+      const data = await res.json();
+
+      return (Array.isArray(data) ? data : []).slice(0, PAGE_SIZE).map((r, idx) => {
+        const rawIngredients = typeof r.ingredients === "string"
+          ? r.ingredients.split("|").map(s => s.trim()).filter(Boolean)
+          : (r.ingredients || []);
+        const rawSteps = typeof r.instructions === "string"
+          ? r.instructions.split(/(?<=\.)\s+/).map(s => s.trim()).filter(Boolean)
+          : (r.instructions || []);
+
+        const item = {
+          id: `ninjas_${idx}_${r.title.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+          source: "API Ninjas",
+          badgeClass: "ninjas",
+          title: r.title,
+          image: "",
+          link: `https://www.google.com/search?q=${encodeURIComponent(r.title + " recipe")}`,
+          summary: `${r.servings || "Standard yield"} • ${rawIngredients.length} ingredients • Full in-app instructions`,
+          ingredients: rawIngredients,
+          instructions: rawSteps.length ? rawSteps : ["Follow standard preparation steps."],
+          prepTime: "15m",
+          cookTime: "25m",
+          servings: r.servings || "4 servings",
+          needsHydration: false
+        };
+        recipeCache.set(item.id, item);
+        return item;
+      });
+    }
+
+    // --- UNIFIED DISPATCHER ---
+
+    window.executeRecipeQuery = async function(isCategoryMode = false) {
+      const searchVal = document.getElementById("search-input").value.trim();
+      const catVal = document.getElementById("category-select").value;
+      const source = document.getElementById("source-select").value;
+      const query = isCategoryMode || !searchVal ? catVal : searchVal;
+
+      lastActiveQuery = query;
+      edamamNextHref = null;
+      dummySkip = 0;
+      dummyTotal = 0;
+
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("feed-grid").style.display = "grid";
       document.getElementById("main-toolbar").style.display = "flex";
-
-      const cat = document.getElementById("category-select").value;
-      setProgress(30);
-      showStatusBanner(`Fetching recipes for ${cat} from open database...`);
-
-      try {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}`);
-        const data = await res.json();
-        setProgress(80);
-
-        if (!data.meals) {
-          allFeedItems = [];
-        } else {
-          allFeedItems = data.meals.map(m => ({
-            id: m.idMeal,
-            title: m.strMeal,
-            image: m.strMealThumb,
-            link: `https://www.themealdb.com/meal/${m.idMeal}`,
-            summary: `Public recipe for ${m.strMeal}. Click to view full ingredients and video tutorial.`
-          }));
-        }
-
-        hideStatusBanner();
-        setProgress(100);
-        renderGrid(allFeedItems);
-        showToast(`Loaded ${allFeedItems.length} recipes!`, "success");
-      } catch (err) {
-        setProgress(100);
-        showStatusBanner("Network error connecting to recipe API.", true);
-      }
-    };
-
-    window.searchApiRecipes = async function() {
-      const query = document.getElementById("search-input").value.trim();
-      if (!query) {
-        loadRecipesByCategory();
-        return;
-      }
-
-      showingSavedOnly = false;
-      document.getElementById("view-saved-btn").classList.remove("active-pill");
-      document.getElementById("detail-view").style.display = "none";
-      document.getElementById("timer-view").style.display = "none";
-      document.getElementById("feed-grid").style.display = "grid";
+      document.getElementById("pagination-bar").style.display = "none";
 
       setProgress(25);
-      showStatusBanner(`Searching database for "${query}" across thousands of meals...`);
+      showStatusBanner(`Querying recipes for "${query}" (capped at ${PAGE_SIZE} cards per batch for fast performance)...`);
 
       try {
-        // Multi-source wildcard expansion query approach to ensure deep matches
-        const endpoint = query.length === 1 
-          ? `https://www.themealdb.com/api/json/v1/1/search.php?f=${encodeURIComponent(query)}`
-          : `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`;
-        
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        setProgress(75);
+        let combined = [];
 
-        let results = data.meals || [];
+        if (source === "themealdb") {
+          combined = await fetchTheMealDB(query, isCategoryMode && !searchVal);
+        } else if (source === "dummyjson") {
+          combined = await fetchDummyJSON(query, 0);
+        } else if (source === "edamam") {
+          if (!apiKeys.edamamId || !apiKeys.edamamKey) {
+            setProgress(100);
+            showStatusBanner(`Edamam requires a free App ID and App Key. Click <strong>API Keys</strong> in the top bar to configure.`, true);
+            renderGrid([]);
+            return;
+          }
+          combined = await fetchEdamam(query);
+        } else if (source === "apininjas") {
+          if (!apiKeys.ninjasKey) {
+            setProgress(100);
+            showStatusBanner(`API Ninjas requires a free X-Api-Key. Click <strong>API Keys</strong> in the top bar to configure.`, true);
+            renderGrid([]);
+            return;
+          }
+          combined = await fetchApiNinjas(query);
+        } else {
+          // Blended mode: query all configured sources in parallel
+          const tasks = [
+            fetchTheMealDB(query, isCategoryMode && !searchVal).catch(() => []),
+            fetchDummyJSON(query, 0).catch(() => [])
+          ];
+          if (apiKeys.edamamId && apiKeys.edamamKey) {
+            tasks.push(fetchEdamam(query).catch(() => []));
+          }
+          if (apiKeys.ninjasKey) {
+            tasks.push(fetchApiNinjas(query).catch(() => []));
+          }
 
-        // If direct search yielded few results, broaden search via alphabet traversal index
-        if (results.length < 3 && query.length > 1) {
-          const firstChar = query[0].toLowerCase();
-          const broadRes = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${firstChar}`);
-          const broadData = await broadRes.json();
-          if (broadData.meals) {
-            const qLower = query.toLowerCase();
-            const matched = broadData.meals.filter(m => 
-              m.strMeal.toLowerCase().includes(qLower) || 
-              (m.strCategory && m.strCategory.toLowerCase().includes(qLower)) ||
-              (m.strArea && m.strArea.toLowerCase().includes(qLower))
-            );
-            const existingIds = new Set(results.map(r => r.idMeal));
-            matched.forEach(m => {
-              if (!existingIds.has(m.idMeal)) {
-                results.push(m);
-                existingIds.add(m.idMeal);
+          const results = await Promise.all(tasks);
+          const maxLen = Math.max(...results.map(r => r.length));
+          for (let i = 0; i < maxLen && combined.length < PAGE_SIZE; i++) {
+            for (const list of results) {
+              if (list[i] && combined.length < PAGE_SIZE) {
+                combined.push(list[i]);
               }
-            });
+            }
           }
         }
 
         setProgress(90);
-        if (results.length === 0) {
-          allFeedItems = [];
-        } else {
-          allFeedItems = results.map(m => ({
-            id: m.idMeal,
-            title: m.strMeal,
-            image: m.strMealThumb,
-            link: `https://www.themealdb.com/meal/${m.idMeal}`,
-            summary: m.strInstructions ? m.strInstructions.slice(0, 130) + "..." : "Click to view ingredients & video walkthrough."
-          }));
-        }
-
+        allFeedItems = combined;
         hideStatusBanner();
         setProgress(100);
         renderGrid(allFeedItems);
-        showToast(`Found ${allFeedItems.length} matching recipes!`, "success");
+        updatePaginationVisibility();
+        showToast(`Loaded ${allFeedItems.length} recipes for "${query}"`, "success");
       } catch (err) {
         setProgress(100);
-        showStatusBanner("Search request failed.", true);
+        showStatusBanner(err.message || "Error connecting to recipe database.", true);
       }
     };
+
+    window.loadRecipesByCategory = function() {
+      document.getElementById("search-input").value = "";
+      executeRecipeQuery(true);
+    };
+
+    window.handleSourceChange = function() {
+      const hasSearch = document.getElementById("search-input").value.trim().length > 0;
+      executeRecipeQuery(!hasSearch);
+    };
+
+    function updatePaginationVisibility() {
+      const bar = document.getElementById("pagination-bar");
+      const canLoadMore = Boolean(edamamNextHref) || (dummySkip > 0 && dummySkip < dummyTotal);
+      bar.style.display = canLoadMore && !showingSavedOnly ? "flex" : "none";
+    }
+
+    window.loadNextPage = async function() {
+      const btn = document.getElementById("load-more-btn");
+      btn.disabled = true;
+      btn.textContent = "Loading next batch...";
+      setProgress(40);
+
+      try {
+        let moreItems = [];
+        if (edamamNextHref) {
+          moreItems = await fetchEdamam(lastActiveQuery, edamamNextHref);
+        } else if (dummySkip < dummyTotal) {
+          moreItems = await fetchDummyJSON(lastActiveQuery, dummySkip);
+        }
+
+        allFeedItems = [...allFeedItems, ...moreItems];
+        renderGrid(allFeedItems);
+        updatePaginationVisibility();
+        setProgress(100);
+        showToast(`Added ${moreItems.length} more recipes`, "success");
+      } catch (e) {
+        setProgress(100);
+        showToast("Could not load additional page", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Load More Recipes";
+      }
+    };
+<script>
+    // --- UI & FAVICON ---
 
     function generateDynamicFavicon(accentColor = "#14532d", badgeActive = false) {
       const badgeSvg = badgeActive
@@ -714,16 +984,6 @@
       }
     }
     generateDynamicFavicon();
-
-    let allFeedItems = [];
-    let currentRecipe = null;
-    let currentScale = 1;
-    let showingSavedOnly = false;
-    let wakeLock = null;
-
-    let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
-    let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
-    let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
 
     function updateCounters() {
       document.getElementById("saved-count").textContent = savedRecipes.length;
@@ -779,7 +1039,9 @@
       grid.innerHTML = "";
 
       if (items.length === 0) {
-        showStatusBanner("No recipes found matching your search. Try another keyword like 'pie', 'chicken', or 'soup'!");
+        if (!document.getElementById("status-banner").style.display || document.getElementById("status-banner").style.display === "none") {
+          showStatusBanner("No recipes found matching your search. Try another keyword or switch database sources!");
+        }
         return;
       }
 
@@ -787,19 +1049,23 @@
         const isSaved = savedRecipes.some(s => s.id === item.id || s.link === item.link);
         const card = document.createElement("div");
         card.className = "card";
+        const mediaHtml = item.image
+          ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />`
+          : `<div class="card-placeholder">${item.title}</div>`;
+
         card.innerHTML = `
-          ${item.image ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />` : ""}
+          ${mediaHtml}
           <div class="card-body">
             <div>
               <div class="card-meta">
-                <span class="badge">Open DB</span>
+                <span class="badge ${item.badgeClass || ''}">${item.source || 'Open DB'}</span>
               </div>
               <h3>${item.title}</h3>
               <p style="font-size:0.88rem; color:var(--muted); margin:0 0 1rem 0;">${item.summary}</p>
             </div>
             <div class="card-actions">
               <button onclick="openRecipeDetail('${item.id}')">Open Recipe</button>
-              <button class="secondary" onclick="toggleSaveItem('${encodeURIComponent(JSON.stringify(item))}')">${isSaved ? "Saved" : "Save"}</button>
+              <button class="secondary" onclick="toggleSaveItem('${item.id}')">${isSaved ? "Saved" : "Save"}</button>
             </div>
           </div>
         `;
@@ -812,16 +1078,29 @@
       if (offlineMatch) {
         currentRecipe = offlineMatch;
         currentScale = 1;
-        addToRecent(offlineMatch.title, offlineMatch.link);
-        renderRecipeDetailView(currentRecipe, "Offline Cache");
+        addToRecent(offlineMatch.title, offlineMatch.id);
+        renderRecipeDetailView(currentRecipe);
         return;
       }
 
+      const cached = recipeCache.get(id);
+      if (cached && !cached.needsHydration) {
+        currentRecipe = {
+          ...cached,
+          searchQuery: `${cached.title} recipe step by step`
+        };
+        currentScale = 1;
+        addToRecent(currentRecipe.title, currentRecipe.id);
+        renderRecipeDetailView(currentRecipe);
+        return;
+      }
+
+      const rawId = cached ? cached.rawId : id.replace("mealdb_", "");
       setProgress(40);
-      showStatusBanner("Fetching full recipe details & YouTube pairing...");
+      showStatusBanner("Fetching full recipe details & video pairing...");
 
       try {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${rawId}`);
         const data = await res.json();
         setProgress(85);
 
@@ -842,7 +1121,8 @@
           : ["Follow standard preparation steps."];
 
         currentRecipe = {
-          id: meal.idMeal,
+          id: `mealdb_${meal.idMeal}`,
+          source: "TheMealDB",
           title: meal.strMeal,
           image: meal.strMealThumb,
           link: `https://www.themealdb.com/meal/${meal.idMeal}`,
@@ -854,25 +1134,54 @@
           cookTime: "25m",
           servings: "4 servings"
         };
+        recipeCache.set(currentRecipe.id, currentRecipe);
         currentScale = 1;
 
-        addToRecent(currentRecipe.title, currentRecipe.link);
+        addToRecent(currentRecipe.title, currentRecipe.id);
         hideStatusBanner();
         setProgress(100);
-        renderRecipeDetailView(currentRecipe, "TheMealDB API");
+        renderRecipeDetailView(currentRecipe);
       } catch (err) {
         setProgress(100);
         showStatusBanner("Could not load full recipe details.", true);
       }
     };
 
-    function renderRecipeDetailView(recipe, engineLabel) {
+    function renderRecipeDetailView(recipe) {
       document.getElementById("feed-grid").style.display = "none";
+      document.getElementById("pagination-bar").style.display = "none";
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "none";
       const detailEl = document.getElementById("detail-view");
-      const ytUrl = recipe.youtube || `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.searchQuery)}`;
+      const ytUrl = recipe.youtube || `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.searchQuery || recipe.title + " recipe")}`;
       const isSaved = savedRecipes.some(s => s.id === recipe.id);
+
+      const actionBanner = recipe.isExternalInstructions
+        ? `
+          <div class="ai-meta">
+            <div>
+              <strong>Indexed via ${recipe.source}:</strong> Full publisher directions hosted on <strong>${recipe.publisherName}</strong>.
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <a href="${recipe.link}" target="_blank" rel="noopener">
+                <button>View Full Publisher Directions ↗</button>
+              </a>
+              <a href="${ytUrl}" target="_blank" rel="noopener">
+                <button class="secondary">YouTube Search ↗</button>
+              </a>
+            </div>
+          </div>
+        `
+        : `
+          <div class="ai-meta">
+            <div>
+              <strong>Source (${recipe.source}):</strong> <code>${recipe.searchQuery || recipe.title}</code>
+            </div>
+            <a href="${ytUrl}" target="_blank" rel="noopener">
+              <button>Watch Video Walkthrough ↗</button>
+            </a>
+          </div>
+        `;
 
       detailEl.innerHTML = `
         <div class="detail-header">
@@ -897,14 +1206,7 @@
 
         ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.title}" style="width:100%; max-height:320px; object-fit:cover; border-radius:var(--radius); margin-bottom:1.5rem;" />` : ""}
 
-        <div class="ai-meta">
-          <div>
-            <strong>Video Pairing (${engineLabel}):</strong> <code>${recipe.searchQuery}</code>
-          </div>
-          <a href="${ytUrl}" target="_blank" rel="noopener">
-            <button>Watch Video Walkthrough ↗</button>
-          </a>
-        </div>
+        ${actionBanner}
 
         <div class="detail-layout">
           <div>
@@ -974,7 +1276,7 @@
 
     window.setScale = function(mult) {
       currentScale = mult;
-      renderRecipeDetailView(currentRecipe, currentRecipe.engineLabel);
+      renderRecipeDetailView(currentRecipe);
       showToast(`Scaled ingredients to ${mult}x`);
     };
 
@@ -990,8 +1292,7 @@
 
     window.copyIngredients = function() {
       if (!currentRecipe) return;
-      const text = currentRecipe.ingredients.join("\n");
-      navigator.clipboard.writeText(text);
+      navigator.clipboard.writeText(currentRecipe.ingredients.join("\n"));
       showToast("Ingredients copied to clipboard", "success");
     };
 
@@ -999,6 +1300,7 @@
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
+      updatePaginationVisibility();
       if (document.body.classList.contains("cook-mode")) {
         toggleCookMode();
       }
@@ -1008,29 +1310,32 @@
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("timer-view").style.display = "none";
+      document.getElementById("search-input").value = "";
       closeDetail();
       loadRecipesByCategory();
     };
 
-    window.toggleSaveItem = function(encodedJson) {
-      const item = JSON.parse(decodeURIComponent(encodedJson));
-      const idx = savedRecipes.findIndex(r => r.id === item.id || r.link === item.link);
+    window.toggleSaveItem = function(id) {
+      const item = recipeCache.get(id) || allFeedItems.find(r => r.id === id) || savedRecipes.find(r => r.id === id);
+      if (!item) return;
+
+      const idx = savedRecipes.findIndex(r => r.id === item.id);
       if (idx > -1) {
         const removed = savedRecipes.splice(idx, 1)[0];
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        renderGrid(allFeedItems);
+        renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
         showToast("Removed from Saved Recipes", "info", () => {
           savedRecipes.push(removed);
           localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
           updateCounters();
-          renderGrid(allFeedItems);
+          renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
         });
       } else {
         savedRecipes.unshift(item);
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        renderGrid(allFeedItems);
+        renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
         showToast("Recipe saved!", "success");
       }
     };
@@ -1045,7 +1350,7 @@
       }
       localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
       updateCounters();
-      renderRecipeDetailView(currentRecipe, currentRecipe.engineLabel);
+      renderRecipeDetailView(currentRecipe);
       showToast("Full recipe saved for offline viewing!", "success");
     };
 
@@ -1055,9 +1360,16 @@
       btn.classList.toggle("active-pill", showingSavedOnly);
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("timer-view").style.display = "none";
+      document.getElementById("pagination-bar").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
-      renderGrid(savedRecipes);
+      hideStatusBanner();
+      if (showingSavedOnly) {
+        renderGrid(savedRecipes);
+      } else {
+        renderGrid(allFeedItems);
+        updatePaginationVisibility();
+      }
     };
 
     window.addAllToShoppingList = function() {
@@ -1110,6 +1422,39 @@
       });
     };
 
+    // --- API KEYS MODAL HANDLERS ---
+
+    window.openKeysModal = function() {
+      document.getElementById("edamam-id-input").value = apiKeys.edamamId || "";
+      document.getElementById("edamam-key-input").value = apiKeys.edamamKey || "";
+      document.getElementById("ninjas-key-input").value = apiKeys.ninjasKey || "";
+      document.getElementById("keys-modal").style.display = "flex";
+    };
+
+    window.saveApiKeys = function() {
+      apiKeys = {
+        edamamId: document.getElementById("edamam-id-input").value.trim(),
+        edamamKey: document.getElementById("edamam-key-input").value.trim(),
+        ninjasKey: document.getElementById("ninjas-key-input").value.trim()
+      };
+      localStorage.setItem("ff_api_keys", JSON.stringify(apiKeys));
+      closeModals();
+      showToast("API keys saved! Reloading recipes...", "success");
+      const hasSearch = document.getElementById("search-input").value.trim().length > 0;
+      executeRecipeQuery(!hasSearch);
+    };
+
+    window.clearApiKeys = function() {
+      apiKeys = { edamamId: "", edamamKey: "", ninjasKey: "" };
+      localStorage.removeItem("ff_api_keys");
+      document.getElementById("edamam-id-input").value = "";
+      document.getElementById("edamam-key-input").value = "";
+      document.getElementById("ninjas-key-input").value = "";
+      showToast("API keys cleared");
+    };
+
+    // --- COOK MODE & RECENT HISTORY ---
+
     window.toggleCookMode = async function() {
       const active = document.body.classList.toggle("cook-mode");
       const btn = document.getElementById("cook-mode-btn");
@@ -1131,9 +1476,9 @@
       }
     };
 
-    function addToRecent(title, link) {
-      recentHistory = recentHistory.filter(r => r.link !== link);
-      recentHistory.unshift({ title, link });
+    function addToRecent(title, id) {
+      recentHistory = recentHistory.filter(r => r.id !== id);
+      recentHistory.unshift({ title, id });
       recentHistory = recentHistory.slice(0, 5);
       localStorage.setItem("ff_recent_history", JSON.stringify(recentHistory));
       renderRecentBar();
@@ -1148,17 +1493,20 @@
       }
       bar.style.display = "flex";
       list.innerHTML = recentHistory.map(r => `
-        <span class="recent-pill" onclick="searchApiRecipes()">
+        <span class="recent-pill" onclick="openRecipeDetail('${r.id}')">
           ${r.title.length > 32 ? r.title.slice(0, 32) + "..." : r.title}
         </span>
       `).join("");
     }
+
+    // --- KITCHEN TIMER ---
 
     let timerSeconds = 0;
     let timerInterval = null;
 
     window.openTimerPage = function() {
       document.getElementById("feed-grid").style.display = "none";
+      document.getElementById("pagination-bar").style.display = "none";
       document.getElementById("detail-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "none";
       document.getElementById("status-banner").style.display = "none";
@@ -1171,7 +1519,8 @@
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
-      loadRecipesByCategory();
+      updatePaginationVisibility();
+      renderRecentBar();
     };
 
     function playChime() {
@@ -1193,8 +1542,7 @@
     function updateTimerDisplay() {
       const m = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
       const s = String(timerSeconds % 60).padStart(2, "0");
-      const displayStr = `${m}:${s}`;
-      document.getElementById("page-timer-display").textContent = displayStr;
+      document.getElementById("page-timer-display").textContent = `${m}:${s}`;
     }
 
     window.addTimerMinutes = function(mins) {
@@ -1241,6 +1589,7 @@
     window.closeModals = () => {
       document.getElementById("shopping-modal").style.display = "none";
       document.getElementById("help-modal").style.display = "none";
+      document.getElementById("keys-modal").style.display = "none";
     };
 
     document.addEventListener("keydown", (e) => {
