@@ -559,12 +559,13 @@
         <option value="Side">Side</option>
       </select>
 
-      <input type="text" id="search-input" placeholder="Search 2M+ recipes (e.g. ramen, tiramisu, tacos)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') executeRecipeQuery()" />
+      <input type="text" id="search-input" placeholder="Search recipes (e.g. ramen, tiramisu, tacos)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') executeRecipeQuery()" />
       <button onclick="executeRecipeQuery()">Search</button>
       <button class="secondary" onclick="resetHome()">Reset</button>
     </div>
   </header>
-<main>
+
+  <main>
     <div id="recent-bar">
       <strong style="color:var(--muted);">Recently Viewed:</strong>
       <div id="recent-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
@@ -654,28 +655,30 @@
         <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
-      <p style="font-size:0.9rem; color:var(--muted);">Multi-database recipe aggregator capped at 20 cards per batch for instant UI performance.</p>
+      <p style="font-size:0.9rem; color:var(--muted);">Multi-database recipe aggregator with batched pagination for instant UI performance.</p>
       <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
         <li><kbd>/</kbd> — Focus search input instantly.</li>
         <li><kbd>Esc</kbd> — Close active modal or recipe detail view.</li>
         <li><kbd>?</kbd> — Open this help guide anytime.</li>
         <li><strong>Database Selector:</strong> Switch between keyless databases (TheMealDB, DummyJSON) or add free API keys for Edamam & API Ninjas.</li>
-        <li><strong>Serving Scaler:</strong> Multiply or divide ingredient amounts dynamically (<kbd>0.5x</kbd> to <kbd>3x</kbd>).</li>
+        <li><strong>Load More:</strong> Click at the bottom of the feed to reveal the next batch of recipes instantly.</li>
       </ul>
     </div>
   </div>
 
   <div id="toast-container"></div>
-<script>
+
+  <script>
     const PAGE_SIZE = 20;
-    let allFeedItems = [];
+    let fullMasterPool = []; // Stores all fetched items for local batch pagination
+    let displayedCount = 0;   // How many items are currently rendered in the grid
     let recipeCache = new Map();
     let currentRecipe = null;
     let currentScale = 1;
     let showingSavedOnly = false;
     let wakeLock = null;
 
-    // Pagination state
+    // Pagination state for external APIs
     let edamamNextHref = null;
     let dummySkip = 0;
     let dummyTotal = 0;
@@ -697,7 +700,7 @@
       const data = await res.json();
       if (!data.meals) return [];
 
-      return data.meals.slice(0, PAGE_SIZE).map(m => {
+      return data.meals.map(m => {
         const item = {
           id: `mealdb_${m.idMeal}`,
           rawId: m.idMeal,
@@ -731,7 +734,7 @@
     }
 
     async function fetchDummyJSON(query, skip = 0) {
-      const url = `https://dummyjson.com/recipes/search?q=${encodeURIComponent(query)}&limit=${PAGE_SIZE}&skip=${skip}`;
+      const url = `https://dummyjson.com/recipes/search?q=${encodeURIComponent(query)}&limit=30&skip=${skip}`;
       const res = await fetch(url);
       const data = await res.json();
       dummyTotal = data.total || 0;
@@ -767,7 +770,7 @@
 
       edamamNextHref = data._links && data._links.next ? data._links.next.href : null;
 
-      return (data.hits || []).slice(0, PAGE_SIZE).map((hit, idx) => {
+      return (data.hits || []).map((hit, idx) => {
         const r = hit.recipe;
         const hash = r.uri.split("#recipe_")[1] || `${Date.now()}_${idx}`;
         const perServingCal = r.yield ? Math.round(r.calories / r.yield) : Math.round(r.calories);
@@ -805,7 +808,7 @@
       if (!res.ok) throw new Error("API Ninjas rejected request. Verify your X-Api-Key.");
       const data = await res.json();
 
-      return (Array.isArray(data) ? data : []).slice(0, PAGE_SIZE).map((r, idx) => {
+      return (Array.isArray(data) ? data : []).map((r, idx) => {
         const rawIngredients = typeof r.ingredients === "string"
           ? r.ingredients.split("|").map(s => s.trim()).filter(Boolean)
           : (r.ingredients || []);
@@ -845,6 +848,8 @@
       edamamNextHref = null;
       dummySkip = 0;
       dummyTotal = 0;
+      fullMasterPool = [];
+      displayedCount = 0;
 
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
@@ -855,7 +860,7 @@
       document.getElementById("pagination-bar").style.display = "none";
 
       setProgress(25);
-      showStatusBanner(`Querying recipes for "${query}" (capped at ${PAGE_SIZE} cards per batch for fast performance)...`);
+      showStatusBanner(`Querying recipes for "${query}" across databases...`);
 
       try {
         let combined = [];
@@ -881,7 +886,7 @@
           }
           combined = await fetchApiNinjas(query);
         } else {
-          // Blended mode: query all configured sources in parallel
+          // Blended mode: query all active sources in parallel
           const tasks = [
             fetchTheMealDB(query, isCategoryMode && !searchVal).catch(() => []),
             fetchDummyJSON(query, 0).catch(() => [])
@@ -895,22 +900,21 @@
 
           const results = await Promise.all(tasks);
           const maxLen = Math.max(...results.map(r => r.length));
-          for (let i = 0; i < maxLen && combined.length < PAGE_SIZE; i++) {
+          for (let i = 0; i < maxLen; i++) {
             for (const list of results) {
-              if (list[i] && combined.length < PAGE_SIZE) {
-                combined.push(list[i]);
-              }
+              if (list[i]) combined.push(list[i]);
             }
           }
         }
 
         setProgress(90);
-        allFeedItems = combined;
+        fullMasterPool = combined;
         hideStatusBanner();
         setProgress(100);
-        renderGrid(allFeedItems);
-        updatePaginationVisibility();
-        showToast(`Loaded ${allFeedItems.length} recipes for "${query}"`, "success");
+        
+        // Render first batch
+        renderNextBatch();
+        showToast(`Loaded ${fullMasterPool.length} recipes for "${query}"`, "success");
       } catch (err) {
         setProgress(100);
         showStatusBanner(err.message || "Error connecting to recipe database.", true);
@@ -927,39 +931,88 @@
       executeRecipeQuery(!hasSearch);
     };
 
-    function updatePaginationVisibility() {
-      const bar = document.getElementById("pagination-bar");
-      const canLoadMore = Boolean(edamamNextHref) || (dummySkip > 0 && dummySkip < dummyTotal);
-      bar.style.display = canLoadMore && !showingSavedOnly ? "flex" : "none";
-    }
-
     window.loadNextPage = async function() {
       const btn = document.getElementById("load-more-btn");
       btn.disabled = true;
-      btn.textContent = "Loading next batch...";
+      btn.textContent = "Loading...";
       setProgress(40);
 
       try {
-        let moreItems = [];
-        if (edamamNextHref) {
-          moreItems = await fetchEdamam(lastActiveQuery, edamamNextHref);
+        // If we have items remaining in our master pool, render them immediately without lag
+        if (displayedCount < fullMasterPool.length) {
+          renderNextBatch();
+          setProgress(100);
+          showToast("Loaded more recipes", "success");
+        } else if (edamamNextHref) {
+          const moreItems = await fetchEdamam(lastActiveQuery, edamamNextHref);
+          fullMasterPool.push(...moreItems);
+          renderNextBatch();
+          setProgress(100);
+          showToast(`Added ${moreItems.length} more recipes`, "success");
         } else if (dummySkip < dummyTotal) {
-          moreItems = await fetchDummyJSON(lastActiveQuery, dummySkip);
+          const moreItems = await fetchDummyJSON(lastActiveQuery, dummySkip);
+          fullMasterPool.push(...moreItems);
+          renderNextBatch();
+          setProgress(100);
+          showToast(`Added ${moreItems.length} more recipes`, "success");
+        } else {
+          setProgress(100);
+          showToast("All available recipes loaded!", "info");
         }
-
-        allFeedItems = [...allFeedItems, ...moreItems];
-        renderGrid(allFeedItems);
-        updatePaginationVisibility();
-        setProgress(100);
-        showToast(`Added ${moreItems.length} more recipes`, "success");
       } catch (e) {
         setProgress(100);
-        showToast("Could not load additional page", "error");
+        showToast("Could not load additional recipes", "error");
       } finally {
         btn.disabled = false;
         btn.textContent = "Load More Recipes";
       }
     };
+
+    function renderNextBatch() {
+      const nextBatch = fullMasterPool.slice(displayedCount, displayedCount + PAGE_SIZE);
+      displayedCount += nextBatch.length;
+      
+      const grid = document.getElementById("feed-grid");
+      if (displayedCount === nextBatch.length) {
+        grid.innerHTML = ""; // First render
+      }
+
+      nextBatch.forEach(item => {
+        const isSaved = savedRecipes.some(s => s.id === item.id || s.link === item.link);
+        const card = document.createElement("div");
+        card.className = "card";
+        const mediaHtml = item.image
+          ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />`
+          : `<div class="card-placeholder">${item.title}</div>`;
+
+        card.innerHTML = `
+          ${mediaHtml}
+          <div class="card-body">
+            <div>
+              <div class="card-meta">
+                <span class="badge ${item.badgeClass || ''}">${item.source || 'Open DB'}</span>
+              </div>
+              <h3>${item.title}</h3>
+              <p style="font-size:0.88rem; color:var(--muted); margin:0 0 1rem 0;">${item.summary}</p>
+            </div>
+            <div class="card-actions">
+              <button onclick="openRecipeDetail('${item.id}')">Open Recipe</button>
+              <button class="secondary" onclick="toggleSaveItem('${item.id}')">${isSaved ? "Saved" : "Save"}</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      updatePaginationVisibility();
+    }
+
+    function updatePaginationVisibility() {
+      const bar = document.getElementById("pagination-bar");
+      const hasMoreLocal = displayedCount < fullMasterPool.length;
+      const hasMoreApi = Boolean(edamamNextHref) || (dummySkip > 0 && dummySkip < dummyTotal);
+      bar.style.display = (hasMoreLocal || hasMoreApi) && !showingSavedOnly ? "flex" : "none";
+    }
 
     // --- UI & FAVICON ---
 
@@ -1032,45 +1085,6 @@
 
     function hideStatusBanner() {
       document.getElementById("status-banner").style.display = "none";
-    }
-
-    function renderGrid(items) {
-      const grid = document.getElementById("feed-grid");
-      grid.innerHTML = "";
-
-      if (items.length === 0) {
-        if (!document.getElementById("status-banner").style.display || document.getElementById("status-banner").style.display === "none") {
-          showStatusBanner("No recipes found matching your search. Try another keyword or switch database sources!");
-        }
-        return;
-      }
-
-      items.forEach(item => {
-        const isSaved = savedRecipes.some(s => s.id === item.id || s.link === item.link);
-        const card = document.createElement("div");
-        card.className = "card";
-        const mediaHtml = item.image
-          ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />`
-          : `<div class="card-placeholder">${item.title}</div>`;
-
-        card.innerHTML = `
-          ${mediaHtml}
-          <div class="card-body">
-            <div>
-              <div class="card-meta">
-                <span class="badge ${item.badgeClass || ''}">${item.source || 'Open DB'}</span>
-              </div>
-              <h3>${item.title}</h3>
-              <p style="font-size:0.88rem; color:var(--muted); margin:0 0 1rem 0;">${item.summary}</p>
-            </div>
-            <div class="card-actions">
-              <button onclick="openRecipeDetail('${item.id}')">Open Recipe</button>
-              <button class="secondary" onclick="toggleSaveItem('${item.id}')">${isSaved ? "Saved" : "Save"}</button>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
     }
 
     window.openRecipeDetail = async function(id) {
@@ -1316,7 +1330,7 @@
     };
 
     window.toggleSaveItem = function(id) {
-      const item = recipeCache.get(id) || allFeedItems.find(r => r.id === id) || savedRecipes.find(r => r.id === id);
+      const item = recipeCache.get(id) || fullMasterPool.find(r => r.id === id) || savedRecipes.find(r => r.id === id);
       if (!item) return;
 
       const idx = savedRecipes.findIndex(r => r.id === item.id);
@@ -1324,18 +1338,18 @@
         const removed = savedRecipes.splice(idx, 1)[0];
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
+        if (showingSavedOnly) renderSavedGrid();
         showToast("Removed from Saved Recipes", "info", () => {
           savedRecipes.push(removed);
           localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
           updateCounters();
-          renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
+          if (showingSavedOnly) renderSavedGrid();
         });
       } else {
         savedRecipes.unshift(item);
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        renderGrid(showingSavedOnly ? savedRecipes : allFeedItems);
+        if (showingSavedOnly) renderSavedGrid();
         showToast("Recipe saved!", "success");
       }
     };
@@ -1365,12 +1379,45 @@
       document.getElementById("feed-grid").style.display = "grid";
       hideStatusBanner();
       if (showingSavedOnly) {
-        renderGrid(savedRecipes);
+        renderSavedGrid();
       } else {
-        renderGrid(allFeedItems);
-        updatePaginationVisibility();
+        renderNextBatch();
       }
     };
+
+    function renderSavedGrid() {
+      const grid = document.getElementById("feed-grid");
+      grid.innerHTML = "";
+      if (savedRecipes.length === 0) {
+        showStatusBanner("No saved recipes yet. Click 'Save' on any recipe card!");
+        return;
+      }
+      savedRecipes.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const mediaHtml = item.image
+          ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />`
+          : `<div class="card-placeholder">${item.title}</div>`;
+
+        card.innerHTML = `
+          ${mediaHtml}
+          <div class="card-body">
+            <div>
+              <div class="card-meta">
+                <span class="badge ${item.badgeClass || ''}">${item.source || 'Open DB'}</span>
+              </div>
+              <h3>${item.title}</h3>
+              <p style="font-size:0.88rem; color:var(--muted); margin:0 0 1rem 0;">${item.summary || ''}</p>
+            </div>
+            <div class="card-actions">
+              <button onclick="openRecipeDetail('${item.id}')">Open Recipe</button>
+              <button class="secondary" onclick="toggleSaveItem('${item.id}')">Remove</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
 
     window.addAllToShoppingList = function() {
       if (!currentRecipe) return;
