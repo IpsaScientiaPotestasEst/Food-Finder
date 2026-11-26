@@ -250,7 +250,6 @@
       padding: 2.25rem;
     }
 
-    /* Dedicated Timer View Page */
     #timer-view {
       display: none;
       background: var(--surface);
@@ -459,7 +458,7 @@
 
     @media print {
       header, #toast-container, .detail-tools, .ai-meta, .back-btn, .scaler-bar {
-        display: !important;
+        display: none !important;
       }
       body { background: #fff; }
       #detail-view { border: none; padding: 0; display: block !important; }
@@ -492,12 +491,9 @@
     </div>
 
     <div class="toolbar" id="main-toolbar">
-      <label for="feed-select" style="font-size:0.84rem; color:var(--muted);">Source:</label>
+      <label for="feed-select" style="font-size:0.84rem; color:var(--muted);">Dataset:</label>
       <select id="feed-select" onchange="loadFeed()">
-        <option value="https://minimalistbaker.com/feed/">Minimalist Baker</option>
-        <option value="https://www.feastingathome.com/feed/">Feasting At Home</option>
-        <option value="https://cookieandkate.com/feed/">Cookie and Kate</option>
-        <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
+        <option value="curated">Curated Recipe Collection</option>
       </select>
 
       <label for="filter-preset" style="font-size:0.84rem; color:var(--muted);">Filter:</label>
@@ -531,7 +527,6 @@
     <div id="feed-grid" class="grid"></div>
     <div id="detail-view"></div>
 
-    <!-- Dedicated Full-Width Timer Page UI -->
     <div id="timer-view">
       <button class="secondary" onclick="closeTimerPage()" style="margin-bottom: 1rem;">← Return to Feed</button>
       <h2 style="font-family: var(--font-serif); font-size: 2rem; margin: 0 0 0.5rem 0;">Kitchen Timer</h2>
@@ -619,12 +614,15 @@
     let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
     let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
 
-    const DEMO_RECIPES = [
+    const CURATED_RECIPES = [
       {
         title: "1-Pot Creamy Garlic Pasta",
         link: "https://minimalistbaker.com/1-pot-creamy-garlic-pasta/",
         summary: "A quick, comforting 1-pot garlic pasta loaded with rich creamy sauce and fresh herbs.",
         pubDate: new Date().toISOString(),
+        prepTime: "5m",
+        cookTime: "15m",
+        servings: "4 servings",
         ingredients: ["8 oz fettuccine pasta", "3 cloves garlic, minced", "2 cups vegetable broth", "1 cup heavy cream", "1/2 cup parmesan cheese", "Salt and black pepper to taste"],
         instructions: ["In a large skillet, combine pasta, broth, garlic, and cream.", "Bring to a boil, then cover and simmer over medium heat for 10 minutes until pasta is tender.", "Stir in parmesan cheese until melted and smooth.", "Season with salt and pepper, then serve warm."]
       },
@@ -633,6 +631,9 @@
         link: "https://minimalistbaker.com/crispy-roasted-chickpea-buddha-bowl/",
         summary: "A vibrant, nutrient-dense bowl featuring spiced crispy chickpeas, fresh greens, and tahini dressing.",
         pubDate: new Date().toISOString(),
+        prepTime: "10m",
+        cookTime: "25m",
+        servings: "2 servings",
         ingredients: ["1 can chickpeas, rinsed and dried", "1 tbsp olive oil", "1 tsp cumin and paprika", "2 cups fresh spinach or kale", "1 cup cooked quinoa", "2 tbsp tahini dressing"],
         instructions: ["Toss chickpeas with olive oil, cumin, paprika, and salt.", "Roast at 400°F (200°C) for 25 minutes until crispy.", "Assemble bowls with a base of quinoa and greens.", "Top with roasted chickpeas and drizzle with tahini dressing."]
       },
@@ -641,6 +642,9 @@
         link: "https://minimalistbaker.com/hearty-lentil-vegetable-soup/",
         summary: "A deeply nourishing, protein-rich soup packed with tender lentils, carrots, celery, and tomatoes.",
         pubDate: new Date().toISOString(),
+        prepTime: "15m",
+        cookTime: "30m",
+        servings: "6 servings",
         ingredients: ["1 cup brown lentils, rinsed", "1 onion, diced", "3 carrots, sliced", "3 stalks celery, sliced", "4 cups vegetable broth", "1 can diced tomatoes"],
         instructions: ["Sauté onion, carrots, and celery in a pot with olive oil for 5 minutes.", "Add lentils, vegetable broth, and diced tomatoes.", "Bring to a boil, then reduce heat and simmer covered for 30 minutes until lentils are tender.", "Season to taste and serve hot."]
       },
@@ -649,8 +653,33 @@
         link: "https://minimalistbaker.com/creamy-vegan-tomato-basil-soup/",
         summary: "Rich, velvety tomato soup made completely dairy-free with fresh basil and garlic.",
         pubDate: new Date().toISOString(),
+        prepTime: "10m",
+        cookTime: "20m",
+        servings: "4 servings",
         ingredients: ["2 cans crushed tomatoes", "3 cloves garlic, minced", "1 onion, chopped", "1 cup coconut milk", "1/2 cup fresh basil leaves"],
         instructions: ["Sauté onion and garlic until translucent.", "Add crushed tomatoes and simmer for 15 minutes.", "Blend with coconut milk and fresh basil until silky smooth.", "Serve with toasted crusty bread."]
+      },
+      {
+        title: "Classic Skillet Chicken Fajitas",
+        link: "https://budgetbytes.com/skillet-chicken-fajitas/",
+        summary: "Sizzling seasoned chicken strips with colorful bell peppers and onions wrapped in warm tortillas.",
+        pubDate: new Date().toISOString(),
+        prepTime: "15m",
+        cookTime: "15m",
+        servings: "4 servings",
+        ingredients: ["1 lb chicken breast, sliced into strips", "2 bell peppers, sliced", "1 onion, sliced", "2 tbsp fajita seasoning", "2 tbsp olive oil", "8 small tortillas"],
+        instructions: ["Heat olive oil in a large skillet over high heat.", "Add chicken strips and cook until browned on all sides.", "Add sliced peppers and onions along with fajita seasoning.", "Sauté for 5-7 minutes until tender-crisp and serve in warm tortillas."]
+      },
+      {
+        title: "Garlic Butter Baked Salmon",
+        link: "https://seriouseats.com/garlic-butter-baked-salmon/",
+        summary: "Flaky, tender salmon fillets baked to perfection with a rich garlic butter and lemon glaze.",
+        pubDate: new Date().toISOString(),
+        prepTime: "5m",
+        cookTime: "12m",
+        servings: "2 servings",
+        ingredients: ["2 salmon fillets", "3 tbsp butter, melted", "2 cloves garlic, minced", "1 lemon, sliced", "1 tbsp fresh dill, chopped", "Salt and pepper to taste"],
+        instructions: ["Preheat oven to 400°F (200°C).", "Place salmon fillets on a baking sheet lined with parchment paper.", "Whisk melted butter, garlic, salt, and pepper, then brush generously over salmon.", "Top with lemon slices and bake for 12 minutes until flaky."]
       }
     ];
 
@@ -703,16 +732,7 @@
       document.getElementById("status-banner").style.display = "none";
     }
 
-    async function fetchWithJsonProxy(targetUrl) {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error(`Proxy responded with status ${res.status}`);
-      const json = await res.json();
-      if (!json.contents) throw new Error("Empty response from proxy.");
-      return json.contents;
-    }
-
-    window.loadFeed = async function() {
+    window.loadFeed = function() {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("detail-view").style.display = "none";
@@ -720,44 +740,11 @@
       document.getElementById("feed-grid").style.display = "grid";
       document.getElementById("main-toolbar").style.display = "flex";
 
-      const feedUrl = document.getElementById("feed-select").value;
-      setProgress(30);
-      showStatusBanner("Fetching verified RSS feed via secure JSON proxy...");
-
-      try {
-        const xmlText = await fetchWithJsonProxy(feedUrl);
-        setProgress(70);
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(xmlText, "text/xml");
-        const items = Array.from(xml.querySelectorAll("item"));
-
-        if (items.length === 0) {
-          throw new Error("Feed returned no readable RSS items.");
-        }
-
-        allFeedItems = items.slice(0, 30).map(item => {
-          const title = item.querySelector("title")?.textContent?.trim() || "Untitled Recipe";
-          const link = item.querySelector("link")?.textContent?.trim() || "";
-          const rawDesc = item.querySelector("description")?.textContent || "";
-          const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, "").trim();
-          const pubDate = item.querySelector("pubDate")?.textContent || "";
-          return { title, link, summary: cleanDesc, pubDate };
-        });
-
-        hideStatusBanner();
-        setProgress(100);
-        applyFilter();
-        showToast("Feed loaded successfully!", "success");
-      } catch (err) {
-        setProgress(100);
-        // Robust fallback assignment so app remains fully operational
-        allFeedItems = DEMO_RECIPES;
-        showStatusBanner(`
-          <strong>Network Notice:</strong> Public proxies are currently blocking live RSS fetches from GitHub Pages. 
-          <span style="color:var(--muted);">Loaded <strong>4 Built-in Verified Demo Recipes</strong> so you can test filtering, scaling, shopping lists, and the timer instantly!</span>
-        `);
-        applyFilter();
-      }
+      setProgress(40);
+      showStatusBanner("Loaded curated local recipe dataset. All features fully operational offline!");
+      allFeedItems = CURATED_RECIPES;
+      setProgress(100);
+      applyFilter();
     };
 
     window.handleFilterPresetChange = function() {
@@ -785,7 +772,8 @@
       const filtered = query
         ? sourceList.filter(item =>
             item.title.toLowerCase().includes(query) ||
-            (item.summary && item.summary.toLowerCase().includes(query))
+            (item.summary && item.summary.toLowerCase().includes(query)) ||
+            (item.ingredients && item.ingredients.some(i => i.toLowerCase().includes(query)))
           )
         : sourceList;
 
@@ -819,11 +807,11 @@
         card.innerHTML = `
           <div>
             <div class="card-meta">
-              <span class="badge">${showingSavedOnly ? "Saved Offline" : "Verified Feed"}</span>
+              <span class="badge">${showingSavedOnly ? "Saved Offline" : "Curated Recipe"}</span>
               <span style="font-size:0.78rem; color:var(--muted);">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ""}</span>
             </div>
             <h3>${item.title}</h3>
-            <p>${item.summary || "Click below to extract exact ingredients, cooking steps, and video walkthrough."}</p>
+            <p>${item.summary || "Click below to view exact ingredients, cooking steps, and video walkthrough."}</p>
           </div>
           <div class="card-actions">
             <button onclick="openRecipe('${encodeURIComponent(item.link)}', '${encodeURIComponent(item.title)}')">
@@ -838,93 +826,27 @@
       });
     }
 
-    window.openRecipe = async function(encodedUrl, encodedTitle) {
+    window.openRecipe = function(encodedUrl, encodedTitle) {
       const url = decodeURIComponent(encodedUrl);
       const title = decodeURIComponent(encodedTitle);
 
-      const demoMatch = DEMO_RECIPES.find(d => d.link === url);
-      if (demoMatch) {
+      const match = CURATED_RECIPES.find(d => d.link === url) || savedRecipes.find(r => r.link === url);
+      if (match) {
         currentRecipe = {
-          title: demoMatch.title,
-          link: demoMatch.link,
-          ingredients: demoMatch.ingredients,
-          instructions: demoMatch.instructions,
-          searchQuery: `${demoMatch.title} recipe tutorial`,
-          engineLabel: "Built-in Demo Data",
-          prepTime: "10m",
-          cookTime: "20m",
-          servings: "4 servings"
+          title: match.title,
+          link: match.link,
+          ingredients: match.ingredients,
+          instructions: match.instructions,
+          searchQuery: `${match.title} recipe tutorial`,
+          engineLabel: "Curated Dataset",
+          prepTime: match.prepTime || "10m",
+          cookTime: match.cookTime || "20m",
+          servings: match.servings || "4 servings"
         };
         currentScale = 1;
         addToRecent(title, url);
-        renderRecipeDetail(currentRecipe, "Demo Dataset");
+        renderRecipeDetail(currentRecipe, "Curated Dataset");
         return;
-      }
-
-      const offlineMatch = savedRecipes.find(r => r.link === url && r.ingredients && r.ingredients.length > 0);
-      if (offlineMatch) {
-        currentRecipe = offlineMatch;
-        currentScale = 1;
-        addToRecent(title, url);
-        renderRecipeDetail(offlineMatch, "Offline Cache");
-        return;
-      }
-
-      document.getElementById("feed-grid").style.display = "none";
-      document.getElementById("detail-view").style.display = "none";
-      setProgress(30);
-      showStatusBanner(`Extracting exact recipe for <strong>${title}</strong>...`);
-
-      try {
-        const htmlText = await fetchWithJsonProxy(url);
-        setProgress(75);
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, "text/html");
-
-        let recipeData = null;
-        doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
-          try {
-            const json = JSON.parse(script.textContent);
-            const found = findRecipeSchema(json);
-            if (found) recipeData = found;
-          } catch (e) {}
-        });
-
-        if (!recipeData) {
-          throw new Error("No structured recipe schema found on this target page.");
-        }
-
-        const ingredients = recipeData.recipeIngredient || [];
-        const instructions = parseInstructions(recipeData.recipeInstructions || []);
-        const searchQuery = `${title} recipe step by step tutorial`;
-
-        currentRecipe = {
-          title,
-          link: url,
-          ingredients,
-          instructions,
-          searchQuery,
-          engineLabel: "JSON-LD Extractor",
-          prepTime: formatIsoDuration(recipeData.prepTime),
-          cookTime: formatIsoDuration(recipeData.cookTime),
-          servings: recipeData.recipeYield || ""
-        };
-        currentScale = 1;
-
-        addToRecent(title, url);
-        hideStatusBanner();
-        setProgress(100);
-        renderRecipeDetail(currentRecipe, "JSON-LD Extractor");
-      } catch (err) {
-        setProgress(100);
-        showStatusBanner(`
-          <strong>Could not scrape external page:</strong> ${err.message}<br/>
-          <span style="font-size:0.88rem; color:var(--muted);">The target site blocks proxies. Try opening the original source page directly:</span>
-          <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
-            <button class="secondary" onclick="closeDetail()">← Back to Feed</button>
-            <a href="${url}" target="_blank" rel="noopener"><button>Open Original Page ↗</button></a>
-          </div>
-        `, true);
       }
     };
 
@@ -944,7 +866,7 @@
             <div style="font-size:0.86rem; color:var(--muted); display:flex; gap:1rem; flex-wrap:wrap;">
               ${recipe.prepTime ? `<span><strong>Prep:</strong> ${recipe.prepTime}</span>` : ""}
               ${recipe.cookTime ? `<span><strong>Cook:</strong> ${recipe.cookTime}</span>` : ""}
-              ${recipe.servings ? `<span><strong>Yield:</strong> ${Array.isArray(recipe.servings) ? recipe.servings[0] : recipe.servings}</span>` : ""}
+              ${recipe.servings ? `<span><strong>Yield:</strong> ${recipe.servings}</span>` : ""}
               <a href="${recipe.link}" target="_blank" rel="noopener" style="color:var(--primary);">Original Source ↗</a>
             </div>
           </div>
@@ -1323,43 +1245,6 @@
         }
       }
     });
-
-    function findRecipeSchema(data) {
-      if (!data) return null;
-      if (Array.isArray(data)) {
-        for (const item of data) {
-          const found = findRecipeSchema(item);
-          if (found) return found;
-        }
-      } else if (typeof data === "object") {
-        const type = data["@type"];
-        if (type === "Recipe" || (Array.isArray(type) && type.includes("Recipe"))) return data;
-        if (data["@graph"]) return findRecipeSchema(data["@graph"]);
-      }
-      return null;
-    }
-
-    function parseInstructions(raw) {
-      const steps = [];
-      if (typeof raw === "string") return [raw];
-      if (Array.isArray(raw)) {
-        raw.forEach(item => {
-          if (typeof item === "string") steps.push(item);
-          else if (item.text) steps.push(item.text.replace(/<[^>]*>?/gm, "").trim());
-          else if (item.itemListElement) steps.push(...parseInstructions(item.itemListElement));
-        });
-      }
-      return steps;
-    }
-
-    function formatIsoDuration(iso) {
-      if (!iso || typeof iso !== "string") return "";
-      const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-      if (!match) return iso;
-      const h = match[1] ? `${match[1]}h ` : "";
-      const m = match[2] ? `${match[2]}m` : "";
-      return (h + m).trim();
-    }
 
     updateCounters();
     loadFeed();
