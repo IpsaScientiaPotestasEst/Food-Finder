@@ -579,87 +579,7 @@
   <div id="toast-container"></div>
 
   <script>
-    function generateDynamicFavicon(accentColor = "#14532d", badgeActive = false) {
-      const badgeSvg = badgeActive
-        ? `<circle cx="50" cy="14" r="10" fill="#d97706" stroke="#ffffff" stroke-width="3"/>`
-        : "";
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-          <rect width="64" height="64" rx="14" fill="${accentColor}"/>
-          <path d="M21 14v14c0 3.3 2.7 6 6 6v16h4V34c3.3 0 6-2.7 6-6V14h-3v11h-2V14h-3v11h-2V14h-3z" fill="#ffffff"/>
-          <path d="M44 14c-3.3 0-6 3.6-6 8 0 3.5 1.8 6.5 4.3 7.6V50h3.4V29.6c2.5-1.1 4.3-4.1 4.3-7.6 0-4.4-2.7-8-6-8z" fill="#bbf7d0"/>
-          ${badgeSvg}
-        </svg>
-      `.trim();
-      const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
-      document.getElementById("dynamic-favicon").href = encoded;
-
-      const brandEl = document.getElementById("brand-icon");
-      if (brandEl) {
-        brandEl.innerHTML = `<img src="${encoded}" alt="Food Finder Icon" width="30" height="30" style="display:block; border-radius:6px;" />`;
-      }
-    }
-    generateDynamicFavicon();
-
-    let allFeedItems = [];
-    let currentRecipe = null;
-    let currentScale = 1;
-    let showingSavedOnly = false;
-    let wakeLock = null;
-
-    let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
-    let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
-    let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
-
-    function updateCounters() {
-      document.getElementById("saved-count").textContent = savedRecipes.length;
-      document.getElementById("shop-count").textContent = shoppingList.length;
-      renderRecentBar();
-    }
-
-    function setProgress(percent) {
-      const bar = document.getElementById("top-progress");
-      bar.style.opacity = percent > 0 ? "1" : "0";
-      bar.style.width = percent + "%";
-      if (percent >= 100) {
-        setTimeout(() => { bar.style.opacity = "0"; bar.style.width = "0%"; }, 350);
-      }
-    }
-
-    window.showToast = function(message, type = "info", undoCallback = null) {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-      toast.className = `toast ${type}`;
-      
-      const span = document.createElement("span");
-      span.textContent = message;
-      toast.appendChild(span);
-
-      if (undoCallback) {
-        const undoBtn = document.createElement("button");
-        undoBtn.textContent = "Undo";
-        undoBtn.onclick = () => {
-          undoCallback();
-          toast.remove();
-        };
-        toast.appendChild(undoBtn);
-      }
-
-      container.appendChild(toast);
-      setTimeout(() => toast.remove(), 4200);
-    };
-
-    function showStatusBanner(htmlContent, isError = false) {
-      const banner = document.getElementById("status-banner");
-      banner.className = isError ? "error" : "";
-      banner.innerHTML = htmlContent;
-      banner.style.display = "block";
-    }
-
-    function hideStatusBanner() {
-      document.getElementById("status-banner").style.display = "none";
-    }
-
+    // Global functions declared upfront to prevent reference errors
     window.loadRecipesByCategory = async function() {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
@@ -742,6 +662,87 @@
       }
     };
 
+    function generateDynamicFavicon(accentColor = "#14532d", badgeActive = false) {
+      const badgeSvg = badgeActive
+        ? `<circle cx="50" cy="14" r="10" fill="#d97706" stroke="#ffffff" stroke-width="3"/>`
+        : "";
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+          <rect width="64" height="64" rx="14" fill="${accentColor}"/>
+          <path d="M21 14v14c0 3.3 2.7 6 6 6v16h4V34c3.3 0 6-2.7 6-6V14h-3v11h-2V14h-3v11h-2V14h-3z" fill="#ffffff"/>
+          <path d="M44 14c-3.3 0-6 3.6-6 8 0 3.5 1.8 6.5 4.3 7.6V50h3.4V29.6c2.5-1.1 4.3-4.1 4.3-7.6 0-4.4-2.7-8-6-8z" fill="#bbf7d0"/>
+          ${badgeSvg}
+        </svg>
+      `.trim();
+      const encoded = "data:image/svg+xml," + encodeURIComponent(svg);
+      document.getElementById("dynamic-favicon").href = encoded;
+
+      const brandEl = document.getElementById("brand-icon");
+      if (brandEl) {
+        brandEl.innerHTML = `<img src="${encoded}" alt="Food Finder Icon" width="30" height="30" style="display:block; border-radius:6px;" />`;
+      }
+    }
+    generateDynamicFavicon();
+
+    let allFeedItems = [];
+    let currentRecipe = null;
+    let currentScale = 1;
+    let showingSavedOnly = false;
+    let wakeLock = null;
+
+    let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
+    let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
+    let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
+
+    function updateCounters() {
+      document.getElementById("saved-count").textContent = savedRecipes.length;
+      document.getElementById("shop-count").textContent = shoppingList.length;
+      renderRecentBar();
+    }
+
+    function setProgress(percent) {
+      const bar = document.getElementById("top-progress");
+      bar.style.opacity = percent > 0 ? "1" : "0";
+      bar.style.width = percent + "%";
+      if (percent >= 100) {
+        setTimeout(() => { bar.style.opacity = "0"; bar.style.width = "0%"; }, 350);
+      }
+    }
+
+    window.showToast = function(message, type = "info", undoCallback = null) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      
+      const span = document.createElement("span");
+      span.textContent = message;
+      toast.appendChild(span);
+
+      if (undoCallback) {
+        const undoBtn = document.createElement("button");
+        undoBtn.textContent = "Undo";
+        undoBtn.onclick = () => {
+          undoCallback();
+          toast.remove();
+        };
+        toast.appendChild(undoBtn);
+      }
+
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4200);
+    };
+
+    function showStatusBanner(htmlContent, isError = false) {
+      const banner = document.getElementById("status-banner");
+      banner.className = isError ? "error" : "";
+      banner.innerHTML = htmlContent;
+      banner.style.display = "block";
+    }
+
+    function hideStatusBanner() {
+      document.getElementById("status-banner").style.display = "none";
+    }
+
     function renderGrid(items) {
       const grid = document.getElementById("feed-grid");
       grid.innerHTML = "";
@@ -801,7 +802,7 @@
           const ing = meal[`strIngredient${i}`];
           const measure = meal[`strMeasure${i}`];
           if (ing && ing.trim()) {
-            ingredients. `${measure ? measure.trim() + " " : ""}${ing.trim()}`);
+            ingredients.push(`${measure ? measure.trim() + " " : ""}${ing.trim()}`);
           }
         }
 
