@@ -193,7 +193,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.35rem;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -201,11 +201,26 @@
     }
     .card:hover { border-color: #a1a1aa; }
 
+    .card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #f4f4f5;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      justify-content: space-between;
+    }
+
     .card-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.5rem;
     }
 
     .badge {
@@ -226,19 +241,10 @@
       line-height: 1.35;
     }
 
-    .card p {
-      font-size: 0.88rem;
-      color: var(--muted);
-      margin: 0 0 1.25rem 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
     .card-actions {
       display: flex;
       gap: 0.5rem;
+      margin-top: 1rem;
     }
     .card-actions button:first-child { flex: 1; justify-content: center; }
 
@@ -491,29 +497,20 @@
     </div>
 
     <div class="toolbar" id="main-toolbar">
-      <label for="feed-select" style="font-size:0.84rem; color:var(--muted);">Dataset:</label>
-      <select id="feed-select" onchange="loadFeed()">
-        <option value="curated">Curated Recipe Collection</option>
+      <label for="category-select" style="font-size:0.84rem; color:var(--muted);">Category:</label>
+      <select id="category-select" onchange="loadRecipesByCategory()">
+        <option value="Chicken">Chicken</option>
+        <option value="Beef">Beef</option>
+        <option value="Pasta">Pasta</option>
+        <option value="Vegetarian">Vegetarian</option>
+        <option value="Dessert">Dessert</option>
+        <option value="Seafood">Seafood</option>
+        <option value="Breakfast">Breakfast</option>
       </select>
 
-      <label for="filter-preset" style="font-size:0.84rem; color:var(--muted);">Filter:</label>
-      <select id="filter-preset" onchange="handleFilterPresetChange()">
-        <option value="">All Recipes (No Filter)</option>
-        <option value="chicken">Chicken & Poultry</option>
-        <option value="pasta">Pasta & Noodles</option>
-        <option value="vegetarian">Vegetarian / Plant-Based</option>
-        <option value="soup">Soups & Stews</option>
-        <option value="beef">Beef & Pork</option>
-        <option value="salmon">Fish & Seafood</option>
-        <option value="salad">Salads & Bowls</option>
-        <option value="cake">Baking & Desserts</option>
-        <option value="custom">Custom filter keyword...</option>
-      </select>
-
-      <input type="text" id="custom-filter-input" placeholder="Type keyword (Press /)..." style="display:none; width:195px;" oninput="applyFilter()" />
-
-      <button onclick="loadFeed()">Refresh Feed</button>
-      <button class="secondary" id="clear-filter-btn" style="display:none;" onclick="clearFilters()">Reset Filter</button>
+      <input type="text" id="search-input" placeholder="Search thousands of recipes (Press /)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') searchApiRecipes()" />
+      <button onclick="searchApiRecipes()">Search API</button>
+      <button class="secondary" onclick="loadRecipesByCategory()">Reset</button>
     </div>
   </header>
 
@@ -568,13 +565,13 @@
         <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
-      <p style="font-size:0.9rem; color:var(--muted);">Built with zero external API keys, zero tracking, and offline browser storage.</p>
+      <p style="font-size:0.9rem; color:var(--muted);">Zero-auth, open-source recipe index powered by public APIs.</p>
       <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
-        <li><kbd>/</kbd> — Focus the custom filter input immediately.</li>
-        <li><kbd>Esc</kbd> — Close recipe view or active modal dialogs.</li>
+        <li><kbd>/</kbd> — Focus search input instantly.</li>
+        <li><kbd>Esc</kbd> — Close active modal or recipe detail view.</li>
         <li><kbd>?</kbd> — Open this help guide anytime.</li>
         <li><strong>Serving Scaler:</strong> Multiply or divide ingredient amounts dynamically (<kbd>0.5x</kbd> to <kbd>3x</kbd>).</li>
-        <li><strong>Cook Mode:</strong> Enlarges recipe text and requests screen wake-lock while your hands are busy.</li>
+        <li><strong>Cook Mode:</strong> Enlarges text and activates wake lock.</li>
       </ul>
     </div>
   </div>
@@ -613,75 +610,6 @@
     let savedRecipes = JSON.parse(localStorage.getItem("ff_saved_recipes") || "[]");
     let shoppingList = JSON.parse(localStorage.getItem("ff_shopping_list") || "[]");
     let recentHistory = JSON.parse(localStorage.getItem("ff_recent_history") || "[]");
-
-    const CURATED_RECIPES = [
-      {
-        title: "1-Pot Creamy Garlic Pasta",
-        link: "https://minimalistbaker.com/1-pot-creamy-garlic-pasta/",
-        summary: "A quick, comforting 1-pot garlic pasta loaded with rich creamy sauce and fresh herbs.",
-        pubDate: new Date().toISOString(),
-        prepTime: "5m",
-        cookTime: "15m",
-        servings: "4 servings",
-        ingredients: ["8 oz fettuccine pasta", "3 cloves garlic, minced", "2 cups vegetable broth", "1 cup heavy cream", "1/2 cup parmesan cheese", "Salt and black pepper to taste"],
-        instructions: ["In a large skillet, combine pasta, broth, garlic, and cream.", "Bring to a boil, then cover and simmer over medium heat for 10 minutes until pasta is tender.", "Stir in parmesan cheese until melted and smooth.", "Season with salt and pepper, then serve warm."]
-      },
-      {
-        title: "Crispy Roasted Chickpea Buddha Bowl",
-        link: "https://minimalistbaker.com/crispy-roasted-chickpea-buddha-bowl/",
-        summary: "A vibrant, nutrient-dense bowl featuring spiced crispy chickpeas, fresh greens, and tahini dressing.",
-        pubDate: new Date().toISOString(),
-        prepTime: "10m",
-        cookTime: "25m",
-        servings: "2 servings",
-        ingredients: ["1 can chickpeas, rinsed and dried", "1 tbsp olive oil", "1 tsp cumin and paprika", "2 cups fresh spinach or kale", "1 cup cooked quinoa", "2 tbsp tahini dressing"],
-        instructions: ["Toss chickpeas with olive oil, cumin, paprika, and salt.", "Roast at 400°F (200°C) for 25 minutes until crispy.", "Assemble bowls with a base of quinoa and greens.", "Top with roasted chickpeas and drizzle with tahini dressing."]
-      },
-      {
-        title: "Hearty Lentil Vegetable Soup",
-        link: "https://minimalistbaker.com/hearty-lentil-vegetable-soup/",
-        summary: "A deeply nourishing, protein-rich soup packed with tender lentils, carrots, celery, and tomatoes.",
-        pubDate: new Date().toISOString(),
-        prepTime: "15m",
-        cookTime: "30m",
-        servings: "6 servings",
-        ingredients: ["1 cup brown lentils, rinsed", "1 onion, diced", "3 carrots, sliced", "3 stalks celery, sliced", "4 cups vegetable broth", "1 can diced tomatoes"],
-        instructions: ["Sauté onion, carrots, and celery in a pot with olive oil for 5 minutes.", "Add lentils, vegetable broth, and diced tomatoes.", "Bring to a boil, then reduce heat and simmer covered for 30 minutes until lentils are tender.", "Season to taste and serve hot."]
-      },
-      {
-        title: "Creamy Vegan Tomato Basil Soup",
-        link: "https://minimalistbaker.com/creamy-vegan-tomato-basil-soup/",
-        summary: "Rich, velvety tomato soup made completely dairy-free with fresh basil and garlic.",
-        pubDate: new Date().toISOString(),
-        prepTime: "10m",
-        cookTime: "20m",
-        servings: "4 servings",
-        ingredients: ["2 cans crushed tomatoes", "3 cloves garlic, minced", "1 onion, chopped", "1 cup coconut milk", "1/2 cup fresh basil leaves"],
-        instructions: ["Sauté onion and garlic until translucent.", "Add crushed tomatoes and simmer for 15 minutes.", "Blend with coconut milk and fresh basil until silky smooth.", "Serve with toasted crusty bread."]
-      },
-      {
-        title: "Classic Skillet Chicken Fajitas",
-        link: "https://budgetbytes.com/skillet-chicken-fajitas/",
-        summary: "Sizzling seasoned chicken strips with colorful bell peppers and onions wrapped in warm tortillas.",
-        pubDate: new Date().toISOString(),
-        prepTime: "15m",
-        cookTime: "15m",
-        servings: "4 servings",
-        ingredients: ["1 lb chicken breast, sliced into strips", "2 bell peppers, sliced", "1 onion, sliced", "2 tbsp fajita seasoning", "2 tbsp olive oil", "8 small tortillas"],
-        instructions: ["Heat olive oil in a large skillet over high heat.", "Add chicken strips and cook until browned on all sides.", "Add sliced peppers and onions along with fajita seasoning.", "Sauté for 5-7 minutes until tender-crisp and serve in warm tortillas."]
-      },
-      {
-        title: "Garlic Butter Baked Salmon",
-        link: "https://seriouseats.com/garlic-butter-baked-salmon/",
-        summary: "Flaky, tender salmon fillets baked to perfection with a rich garlic butter and lemon glaze.",
-        pubDate: new Date().toISOString(),
-        prepTime: "5m",
-        cookTime: "12m",
-        servings: "2 servings",
-        ingredients: ["2 salmon fillets", "3 tbsp butter, melted", "2 cloves garlic, minced", "1 lemon, sliced", "1 tbsp fresh dill, chopped", "Salt and pepper to taste"],
-        instructions: ["Preheat oven to 400°F (200°C).", "Place salmon fillets on a baking sheet lined with parchment paper.", "Whisk melted butter, garlic, salt, and pepper, then brush generously over salmon.", "Top with lemon slices and bake for 12 minutes until flaky."]
-      }
-    ];
 
     function updateCounters() {
       document.getElementById("saved-count").textContent = savedRecipes.length;
@@ -732,7 +660,7 @@
       document.getElementById("status-banner").style.display = "none";
     }
 
-    window.loadFeed = function() {
+    window.loadRecipesByCategory = async function() {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("detail-view").style.display = "none";
@@ -740,52 +668,78 @@
       document.getElementById("feed-grid").style.display = "grid";
       document.getElementById("main-toolbar").style.display = "flex";
 
-      setProgress(40);
-      showStatusBanner("Loaded curated local recipe dataset. All features fully operational offline!");
-      allFeedItems = CURATED_RECIPES;
-      setProgress(100);
-      applyFilter();
-    };
+      const cat = document.getElementById("category-select").value;
+      setProgress(30);
+      showStatusBanner(`Fetching recipes for ${cat} from open database API...`);
 
-    window.handleFilterPresetChange = function() {
-      const preset = document.getElementById("filter-preset").value;
-      const customInput = document.getElementById("custom-filter-input");
-      if (preset === "custom") {
-        customInput.style.display = "inline-block";
-        customInput.focus();
-      } else {
-        customInput.style.display = "none";
-        customInput.value = "";
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}`);
+        const data = await res.json();
+        setProgress(80);
+
+        if (!data.meals) {
+          allFeedItems = [];
+        } else {
+          allFeedItems = data.meals.map(m => ({
+            id: m.idMeal,
+            title: m.strMeal,
+            image: m.strMealThumb,
+            link: `https://www.themealdb.com/meal/${m.idMeal}`,
+            summary: `Delicious public recipe for ${m.strMeal}. Click to view full ingredients and video tutorial.`
+          }));
+        }
+
+        hideStatusBanner();
+        setProgress(100);
+        renderGrid(allFeedItems);
+        showToast(`Loaded ${allFeedItems.length} recipes successfully!`, "success");
+      } catch (err) {
+        setProgress(100);
+        showStatusBanner("Network error connecting to recipe API. Check your connection.", true);
       }
-      applyFilter();
     };
 
-    window.applyFilter = function() {
-      const preset = document.getElementById("filter-preset").value;
-      const customVal = document.getElementById("custom-filter-input").value.trim().toLowerCase();
-      const query = preset === "custom" ? customVal : preset.toLowerCase();
+    window.searchApiRecipes = async function() {
+      const query = document.getElementById("search-input").value.trim();
+      if (!query) {
+        loadRecipesByCategory();
+        return;
+      }
 
-      const clearBtn = document.getElementById("clear-filter-btn");
-      clearBtn.style.display = query ? "inline-flex" : "none";
+      showingSavedOnly = false;
+      document.getElementById("view-saved-btn").classList.remove("active-pill");
+      document.getElementById("detail-view").style.display = "none";
+      document.getElementById("timer-view").style.display = "none";
+      document.getElementById("feed-grid").style.display = "grid";
 
-      const sourceList = showingSavedOnly ? savedRecipes : allFeedItems;
-      const filtered = query
-        ? sourceList.filter(item =>
-            item.title.toLowerCase().includes(query) ||
-            (item.summary && item.summary.toLowerCase().includes(query)) ||
-            (item.ingredients && item.ingredients.some(i => i.toLowerCase().includes(query)))
-          )
-        : sourceList;
+      setProgress(30);
+      showStatusBanner(`Searching database for "${query}"...`);
 
-      renderGrid(filtered);
-    };
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        setProgress(80);
 
-    window.clearFilters = function() {
-      document.getElementById("filter-preset").value = "";
-      document.getElementById("custom-filter-input").style.display = "none";
-      document.getElementById("custom-filter-input").value = "";
-      applyFilter();
-      showToast("Filters cleared");
+        if (!data.meals) {
+          allFeedItems = [];
+        } else {
+          allFeedItems = data.meals.map(m => ({
+            id: m.idMeal,
+            title: m.strMeal,
+            image: m.strMealThumb,
+            link: `https://www.themealdb.com/meal/${m.idMeal}`,
+            summary: m.strInstructions ? m.strInstructions.slice(0, 120) + "..." : "Click to view ingredients & video."
+          }));
+        }
+
+        hideStatusBanner();
+        setProgress(100);
+        renderGrid(allFeedItems);
+        showToast(`Found ${allFeedItems.length} matching recipes!`, "success");
+      } catch (err) {
+        setProgress(100);
+        showStatusBanner("Search request failed.", true);
+      }
     };
 
     function renderGrid(items) {
@@ -793,70 +747,100 @@
       grid.innerHTML = "";
 
       if (items.length === 0) {
-        showStatusBanner(`
-          No recipes matched your current filter. 
-          <button class="secondary" style="margin-left:0.5rem;" onclick="clearFilters()">Reset Filter</button>
-        `);
+        showStatusBanner("No recipes found matching your search. Try another keyword!");
         return;
       }
 
       items.forEach(item => {
-        const isSaved = savedRecipes.some(s => s.link === item.link);
+        const isSaved = savedRecipes.some(s => s.id === item.id || s.link === item.link);
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <div>
-            <div class="card-meta">
-              <span class="badge">${showingSavedOnly ? "Saved Offline" : "Curated Recipe"}</span>
-              <span style="font-size:0.78rem; color:var(--muted);">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ""}</span>
+          ${item.image ? `<img src="${item.image}" alt="${item.title}" class="card-img" loading="lazy" />` : ""}
+          <div class="card-body">
+            <div>
+              <div class="card-meta">
+                <span class="badge">Open DB</span>
+              </div>
+              <h3>${item.title}</h3>
+              <p style="font-size:0.88rem; color:var(--muted); margin:0 0 1rem 0;">${item.summary}</p>
             </div>
-            <h3>${item.title}</h3>
-            <p>${item.summary || "Click below to view exact ingredients, cooking steps, and video walkthrough."}</p>
-          </div>
-          <div class="card-actions">
-            <button onclick="openRecipe('${encodeURIComponent(item.link)}', '${encodeURIComponent(item.title)}')">
-              Open Recipe
-            </button>
-            <button class="secondary" onclick="toggleSaveItem('${encodeURIComponent(JSON.stringify(item))}')" title="Bookmark recipe">
-              ${isSaved ? "Saved" : "Save"}
-            </button>
+            <div class="card-actions">
+              <button onclick="openRecipeDetail('${item.id}')">Open Recipe</button>
+              <button class="secondary" onclick="toggleSaveItem('${encodeURIComponent(JSON.stringify(item))}')">${isSaved ? "Saved" : "Save"}</button>
+            </div>
           </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    window.openRecipe = function(encodedUrl, encodedTitle) {
-      const url = decodeURIComponent(encodedUrl);
-      const title = decodeURIComponent(encodedTitle);
+    window.openRecipeDetail = async function(id) {
+      const offlineMatch = savedRecipes.find(r => r.id === id && r.ingredients);
+      if (offlineMatch) {
+        currentRecipe = offlineMatch;
+        currentScale = 1;
+        addToRecent(offlineMatch.title, offlineMatch.link);
+        renderRecipeDetailView(currentRecipe, "Offline Cache");
+        return;
+      }
 
-      const match = CURATED_RECIPES.find(d => d.link === url) || savedRecipes.find(r => r.link === url);
-      if (match) {
+      setProgress(40);
+      showStatusBanner("Fetching full recipe details & YouTube pairing...");
+
+      try {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+        const data = await res.json();
+        setProgress(85);
+
+        if (!data.meals || data.meals.length === 0) throw new Error("Recipe details not found.");
+        const meal = data.meals[0];
+
+        const ingredients = [];
+        for (let i = 1; i <= 20; i++) {
+          const ing = meal[`strIngredient${i}`];
+          const measure = meal[`strMeasure${i}`];
+          if (ing && ing.trim()) {
+            ingredients. `${measure ? measure.trim() + " " : ""}${ing.trim()}`);
+          }
+        }
+
+        const instructions = meal.strInstructions
+          ? meal.strInstructions.split(/\r?\n/).filter(s => s.trim().length > 0)
+          : ["Follow standard preparation steps."];
+
         currentRecipe = {
-          title: match.title,
-          link: match.link,
-          ingredients: match.ingredients,
-          instructions: match.instructions,
-          searchQuery: `${match.title} recipe tutorial`,
-          engineLabel: "Curated Dataset",
-          prepTime: match.prepTime || "10m",
-          cookTime: match.cookTime || "20m",
-          servings: match.servings || "4 servings"
+          id: meal.idMeal,
+          title: meal.strMeal,
+          image: meal.strMealThumb,
+          link: `https://www.themealdb.com/meal/${meal.idMeal}`,
+          youtube: meal.strYoutube || "",
+          searchQuery: `${meal.strMeal} recipe step by step`,
+          ingredients,
+          instructions,
+          prepTime: "15m",
+          cookTime: "25m",
+          servings: "4 servings"
         };
         currentScale = 1;
-        addToRecent(title, url);
-        renderRecipeDetail(currentRecipe, "Curated Dataset");
-        return;
+
+        addToRecent(currentRecipe.title, currentRecipe.link);
+        hideStatusBanner();
+        setProgress(100);
+        renderRecipeDetailView(currentRecipe, "TheMealDB API");
+      } catch (err) {
+        setProgress(100);
+        showStatusBanner("Could not load full recipe details.", true);
       }
     };
 
-    function renderRecipeDetail(recipe, engineLabel) {
+    function renderRecipeDetailView(recipe, engineLabel) {
       document.getElementById("feed-grid").style.display = "none";
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "none";
       const detailEl = document.getElementById("detail-view");
-      const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.searchQuery)}`;
-      const isSaved = savedRecipes.some(s => s.link === recipe.link);
+      const ytUrl = recipe.youtube || `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.searchQuery)}`;
+      const isSaved = savedRecipes.some(s => s.id === recipe.id);
 
       detailEl.innerHTML = `
         <div class="detail-header">
@@ -864,9 +848,9 @@
             <button class="secondary back-btn" onclick="closeDetail()">← Back to Feed (Esc)</button>
             <h2 class="detail-title">${recipe.title}</h2>
             <div style="font-size:0.86rem; color:var(--muted); display:flex; gap:1rem; flex-wrap:wrap;">
-              ${recipe.prepTime ? `<span><strong>Prep:</strong> ${recipe.prepTime}</span>` : ""}
-              ${recipe.cookTime ? `<span><strong>Cook:</strong> ${recipe.cookTime}</span>` : ""}
-              ${recipe.servings ? `<span><strong>Yield:</strong> ${recipe.servings}</span>` : ""}
+              <span><strong>Prep:</strong> ${recipe.prepTime}</span>
+              <span><strong>Cook:</strong> ${recipe.cookTime}</span>
+              <span><strong>Yield:</strong> ${recipe.servings}</span>
               <a href="${recipe.link}" target="_blank" rel="noopener" style="color:var(--primary);">Original Source ↗</a>
             </div>
           </div>
@@ -879,12 +863,14 @@
           </div>
         </div>
 
+        ${recipe.image ? `<img src="${recipe.image}" alt="${recipe.title}" style="width:100%; max-height:320px; object-fit:cover; border-radius:var(--radius); margin-bottom:1.5rem;" />` : ""}
+
         <div class="ai-meta">
           <div>
             <strong>Video Pairing (${engineLabel}):</strong> <code>${recipe.searchQuery}</code>
           </div>
           <a href="${ytUrl}" target="_blank" rel="noopener">
-            <button>Watch Tutorial on YouTube ↗</button>
+            <button>Watch Video Walkthrough ↗</button>
           </a>
         </div>
 
@@ -904,7 +890,7 @@
               `).join("")}
             </div>
 
-            <ul class="ingredient-list" id="rendered-ingredients">
+            <ul class="ingredient-list">
               ${renderScaledIngredientsHtml(recipe.ingredients, currentScale)}
             </ul>
           </div>
@@ -956,7 +942,7 @@
 
     window.setScale = function(mult) {
       currentScale = mult;
-      renderRecipeDetail(currentRecipe, currentRecipe.engineLabel);
+      renderRecipeDetailView(currentRecipe, currentRecipe.engineLabel);
       showToast(`Scaled ingredients to ${mult}x`);
     };
 
@@ -991,35 +977,35 @@
       document.getElementById("view-saved-btn").classList.remove("active-pill");
       document.getElementById("timer-view").style.display = "none";
       closeDetail();
-      clearFilters();
+      loadRecipesByCategory();
     };
 
     window.toggleSaveItem = function(encodedJson) {
       const item = JSON.parse(decodeURIComponent(encodedJson));
-      const idx = savedRecipes.findIndex(r => r.link === item.link);
+      const idx = savedRecipes.findIndex(r => r.id === item.id || r.link === item.link);
       if (idx > -1) {
         const removed = savedRecipes.splice(idx, 1)[0];
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        applyFilter();
+        renderGrid(allFeedItems);
         showToast("Removed from Saved Recipes", "info", () => {
           savedRecipes.push(removed);
           localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
           updateCounters();
-          applyFilter();
+          renderGrid(allFeedItems);
         });
       } else {
         savedRecipes.unshift(item);
         localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
         updateCounters();
-        applyFilter();
+        renderGrid(allFeedItems);
         showToast("Recipe saved!", "success");
       }
     };
 
     window.saveFullRecipeOffline = function() {
       if (!currentRecipe) return;
-      const idx = savedRecipes.findIndex(r => r.link === currentRecipe.link);
+      const idx = savedRecipes.findIndex(r => r.id === currentRecipe.id);
       if (idx > -1) {
         savedRecipes[idx] = currentRecipe;
       } else {
@@ -1027,7 +1013,7 @@
       }
       localStorage.setItem("ff_saved_recipes", JSON.stringify(savedRecipes));
       updateCounters();
-      renderRecipeDetail(currentRecipe, currentRecipe.engineLabel);
+      renderRecipeDetailView(currentRecipe, currentRecipe.engineLabel);
       showToast("Full recipe saved for offline viewing!", "success");
     };
 
@@ -1039,7 +1025,7 @@
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
-      applyFilter();
+      renderGrid(savedRecipes);
     };
 
     window.addAllToShoppingList = function() {
@@ -1130,7 +1116,7 @@
       }
       bar.style.display = "flex";
       list.innerHTML = recentHistory.map(r => `
-        <span class="recent-pill" onclick="openRecipe('${encodeURIComponent(r.link)}', '${encodeURIComponent(r.title)}')">
+        <span class="recent-pill" onclick="searchApiRecipes()">
           ${r.title.length > 32 ? r.title.slice(0, 32) + "..." : r.title}
         </span>
       `).join("");
@@ -1153,7 +1139,7 @@
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("main-toolbar").style.display = "flex";
       document.getElementById("feed-grid").style.display = "grid";
-      applyFilter();
+      loadRecipesByCategory();
     };
 
     function playChime() {
@@ -1232,8 +1218,7 @@
       }
       if (e.key === "/") {
         e.preventDefault();
-        document.getElementById("filter-preset").value = "custom";
-        handleFilterPresetChange();
+        document.getElementById("search-input").focus();
       } else if (e.key === "?") {
         openHelpModal();
       } else if (e.key === "Escape") {
@@ -1247,7 +1232,7 @@
     });
 
     updateCounters();
-    loadFeed();
+    loadRecipesByCategory();
   </script>
 </body>
 </html>
