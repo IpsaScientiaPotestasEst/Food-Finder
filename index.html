@@ -502,14 +502,16 @@
         <option value="Chicken">Chicken</option>
         <option value="Beef">Beef</option>
         <option value="Pasta">Pasta</option>
-        <option value="Vegetarian">Vegetarian</option>
         <option value="Dessert">Dessert</option>
+        <option value="Vegetarian">Vegetarian</option>
         <option value="Seafood">Seafood</option>
         <option value="Breakfast">Breakfast</option>
+        <option value="Starter">Starter</option>
+        <option value="Side">Side</option>
       </select>
 
-      <input type="text" id="search-input" placeholder="Search thousands of recipes (Press /)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') searchApiRecipes()" />
-      <button onclick="searchApiRecipes()">Search API</button>
+      <input type="text" id="search-input" placeholder="Search recipes (e.g. raspberry, pie, curry)..." style="flex:1; min-width:220px;" onkeydown="if(event.key==='Enter') searchApiRecipes()" />
+      <button onclick="searchApiRecipes()">Search</button>
       <button class="secondary" onclick="loadRecipesByCategory()">Reset</button>
     </div>
   </header>
@@ -565,7 +567,7 @@
         <h2 style="margin:0; font-family:var(--font-serif);">Food Finder Guide</h2>
         <button class="secondary" onclick="closeModals()">Close</button>
       </div>
-      <p style="font-size:0.9rem; color:var(--muted);">Zero-auth, open-source recipe index powered by public APIs.</p>
+      <p style="font-size:0.9rem; color:var(--muted);">Zero-auth, open-source recipe index powered by public wildcard search engines.</p>
       <ul style="font-size:0.88rem; padding-left:1.2rem; line-height:1.7;">
         <li><kbd>/</kbd> — Focus search input instantly.</li>
         <li><kbd>Esc</kbd> — Close active modal or recipe detail view.</li>
@@ -579,7 +581,6 @@
   <div id="toast-container"></div>
 
   <script>
-    // Global functions declared upfront to prevent reference errors
     window.loadRecipesByCategory = async function() {
       showingSavedOnly = false;
       document.getElementById("view-saved-btn").classList.remove("active-pill");
@@ -590,7 +591,7 @@
 
       const cat = document.getElementById("category-select").value;
       setProgress(30);
-      showStatusBanner(`Fetching recipes for ${cat} from open database API...`);
+      showStatusBanner(`Fetching recipes for ${cat} from open database...`);
 
       try {
         const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}`);
@@ -605,17 +606,17 @@
             title: m.strMeal,
             image: m.strMealThumb,
             link: `https://www.themealdb.com/meal/${m.idMeal}`,
-            summary: `Delicious public recipe for ${m.strMeal}. Click to view full ingredients and video tutorial.`
+            summary: `Public recipe for ${m.strMeal}. Click to view full ingredients and video tutorial.`
           }));
         }
 
         hideStatusBanner();
         setProgress(100);
         renderGrid(allFeedItems);
-        showToast(`Loaded ${allFeedItems.length} recipes successfully!`, "success");
+        showToast(`Loaded ${allFeedItems.length} recipes!`, "success");
       } catch (err) {
         setProgress(100);
-        showStatusBanner("Network error connecting to recipe API. Check your connection.", true);
+        showStatusBanner("Network error connecting to recipe API.", true);
       }
     };
 
@@ -632,23 +633,53 @@
       document.getElementById("timer-view").style.display = "none";
       document.getElementById("feed-grid").style.display = "grid";
 
-      setProgress(30);
-      showStatusBanner(`Searching database for "${query}"...`);
+      setProgress(25);
+      showStatusBanner(`Searching database for "${query}" across thousands of meals...`);
 
       try {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+        // Multi-source wildcard expansion query approach to ensure deep matches
+        const endpoint = query.length === 1 
+          ? `https://www.themealdb.com/api/json/v1/1/search.php?f=${encodeURIComponent(query)}`
+          : `https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`;
+        
+        const res = await fetch(endpoint);
         const data = await res.json();
-        setProgress(80);
+        setProgress(75);
 
-        if (!data.meals) {
+        let results = data.meals || [];
+
+        // If direct search yielded few results, broaden search via alphabet traversal index
+        if (results.length < 3 && query.length > 1) {
+          const firstChar = query[0].toLowerCase();
+          const broadRes = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${firstChar}`);
+          const broadData = await broadRes.json();
+          if (broadData.meals) {
+            const qLower = query.toLowerCase();
+            const matched = broadData.meals.filter(m => 
+              m.strMeal.toLowerCase().includes(qLower) || 
+              (m.strCategory && m.strCategory.toLowerCase().includes(qLower)) ||
+              (m.strArea && m.strArea.toLowerCase().includes(qLower))
+            );
+            const existingIds = new Set(results.map(r => r.idMeal));
+            matched.forEach(m => {
+              if (!existingIds.has(m.idMeal)) {
+                results.push(m);
+                existingIds.add(m.idMeal);
+              }
+            });
+          }
+        }
+
+        setProgress(90);
+        if (results.length === 0) {
           allFeedItems = [];
         } else {
-          allFeedItems = data.meals.map(m => ({
+          allFeedItems = results.map(m => ({
             id: m.idMeal,
             title: m.strMeal,
             image: m.strMealThumb,
             link: `https://www.themealdb.com/meal/${m.idMeal}`,
-            summary: m.strInstructions ? m.strInstructions.slice(0, 120) + "..." : "Click to view ingredients & video."
+            summary: m.strInstructions ? m.strInstructions.slice(0, 130) + "..." : "Click to view ingredients & video walkthrough."
           }));
         }
 
@@ -748,7 +779,7 @@
       grid.innerHTML = "";
 
       if (items.length === 0) {
-        showStatusBanner("No recipes found matching your search. Try another keyword!");
+        showStatusBanner("No recipes found matching your search. Try another keyword like 'pie', 'chicken', or 'soup'!");
         return;
       }
 
