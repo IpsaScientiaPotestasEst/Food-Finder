@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Static Open-Source Recipe & AI Video Pairer</title>
+  <style>
+    :root {
+      --bg: #f8f7f4;
+      --surface: #ffffff;
+      --text: #1f2421;
+      --muted: #5c6660;
+      --accent: #2d6a4f;
+      --accent-hover: #1b4332;
+      --border: #e2e0d8;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { margin: 0; font-size: 1.35rem; color: var(--accent); }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+    select, input, button {
+      padding: 0.55rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: var(--accent-hover); }
+    main { max-width: 1200px; margin: 1.5rem auto; padding: 0 1.5rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.12s ease;
+    }
+    .card:hover { transform: translateY(-2px); }
+    .card h3 { margin: 0 0 0.5rem 0; font-size: 1.05rem; }
+    .card p { font-size: 0.88rem; color: var(--muted); margin: 0 0 1rem 0; }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      background: #e9f5ee;
+      color: var(--accent);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    #detail-view {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+    .back-btn { background: #495057; margin-bottom: 1.25rem; }
+    .detail-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 2rem;
+      margin-top: 1rem;
+    }
+    @media (max-width: 820px) {
+      .detail-layout { grid-template-columns: 1fr; }
+    }
+    .ai-meta {
+      background: #f1f5f2;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+    }
+    ul.ingredients { padding-left: 1.2rem; }
+    ul.ingredients li { margin-bottom: 0.35rem; }
+    ol.steps { padding-left: 1.2rem; }
+    ol.steps li { margin-bottom: 0.75rem; }
+    .status { text-align: center; padding: 2rem; color: var(--muted); }
+  </style>
+
+  <!-- Load Transformers.js for in-browser AI -->
+  <script type="module">
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
+    window.transformersPipeline = pipeline;
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Static OpenRecipe & AI Video Pairer</h1>
+    <div class="controls">
+      <select id="feed-select">
+        <option value="https://www.bbcgoodfood.com/feed">BBC Good Food (UK)</option>
+        <option value="https://www.seriouseats.com/recipes">Serious Eats</option>
+        <option value="https://www.budgetbytes.com/feed/">Budget Bytes</option>
+      </select>
+      <input type="text" id="filter-input" placeholder="Filter recipes..." />
+      <button onclick="loadFeed()">Load Feed</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="ai-status" style="font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; text-align: center;">
+      In-Browser AI Status: Ready to load on demand.
+    </div>
+    <div id="status" class="status">Select a feed and click Load Feed.</div>
+    <div id="feed-grid" class="grid"></div>
+    <div id="detail-view"></div>
+  </main>
+
+  <script>
+    const CORS_PROXY = "https://api.allorigins.win/raw?url=";
+    let summarizer = null;
+
+    async function initAI() {
+      if (summarizer) return summarizer;
+      const aiStatus = document.getElementById("ai-status");
+      aiStatus.textContent = "Loading lightweight browser AI model (Qwen2.5-0.5B)... First load downloads ~300MB once.";
+      try {
+        // Uses a small, fast instruction-tuned model running locally in WebAssembly/WebGPU
+        summarizer = await window.transformersPipeline('text-generation', 'Xenova/Qwen2.5-0.5B-Instruct');
+        aiStatus.textContent = "In-Browser AI Model loaded successfully!";
+      } catch (e) {
+        aiStatus.textContent = "In-Browser AI skipped (falling back to keyword query builder).";
+      }
+      return summarizer;
+    }
+
+    async function loadFeed() {
+      const feedUrl = document.getElementById("feed-select").value;
+      const filterQ = document.getElementById("filter-input").value.trim().toLowerCase();
+
+      document.getElementById("detail-view").style.display = "none";
+      const grid = document.getElementById("feed-grid");
+      const status = document.getElementById("status");
+      grid.innerHTML = "";
+      status.style.display = "block";
+      status.textContent = "Fetching RSS feed via CORS proxy...";
+
+      try {
+        const res = await fetch(CORS_PROXY + encodeURIComponent(feedUrl));
+        const text = await res.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const items = xml.querySelectorAll("item");
+
+        grid.innerHTML = "";
+        let count = 0;
+
+        items.forEach(item => {
+          if (count >= 24) return;
+          const title = item.querySelector("title")?.textContent || "Untitled";
+          const link = item.querySelector("link")?.textContent || "";
+          const descEl = item.querySelector("description")?.textContent || "";
+          const cleanDesc = descEl.replace(/<[^>]*>?/gm, '');
+
+          if (filterQ && !title.toLowerCase().includes(filterQ) && !cleanDesc.toLowerCase().includes(cleanDesc)) {
+            return;
+          }
+
+          count++;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <div>
+              <span class="badge">Recipe Feed</span>
+              <h3>${title}</h3>
+              <p>${cleanDesc.substring(0, 150)}...</p>
+            </div>
+            <button onclick="openRecipe('${encodeURIComponent(link)}', '${encodeURIComponent(title)}')">Extract Recipe & Video</button>
+          `;
+          grid.appendChild(card);
+        });
+
+        status.style.display = "none";
+        if (count === 0) {
+          status.style.display = "block";
+          status.textContent = "No items matched your filter.";
+        }
+      } catch (err) {
+        status.textContent = "Error fetching feed. Try a different source or check network connection.";
+      }
+    }
+
+    async function openRecipe(encodedUrl, encodedTitle) {
+      const url = decodeURIComponent(encodedUrl);
+      const title = decodeURIComponent(encodedTitle);
+
+      document.getElementById("feed-grid").style.display = "none";
+      document.getElementById("detail-view").style.display = "none";
+      const status = document.getElementById("status");
+      status.style.display = "block";
+      status.textContent = "Fetching recipe page and parsing JSON-LD schema...";
+
+      try {
+        const res = await fetch(CORS_PROXY + encodeURIComponent(url));
+        const htmlText = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, "text/html");
+
+        let recipeData = null;
+        doc.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+          try {
+            const json = JSON.parse(script.textContent);
+            let found = findRecipeSchema(json);
+            if (found) recipeData = found;
+          } catch(e) {}
+        });
+
+        if (!recipeData) {
+          throw new Error("No structured JSON-LD recipe found on this page.");
+        }
+
+        const ingredients = recipeData.recipeIngredient || [];
+        const rawInstructions = recipeData.recipeInstructions || [];
+        const instructions = parseInstructions(rawInstructions);
+
+        // Run local browser AI to create a smart YouTube search query
+        let searchQuery = `${title} recipe cooking tutorial`;
+        const pipe = await initAI();
+        if (pipe) {
+          const prompt = `Recipe: ${title}\nWrite a 5-word YouTube cooking search query:`;
+          const output = await pipe(prompt, { max_new_tokens: 15, temperature: 0.3 });
+          if (output && output[0]?.generated_text) {
+            searchQuery = output[0].generated_text.replace(prompt, "").trim().replace(/['"]/g, "");
+          }
+        }
+
+        const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}`;
+
+        status.style.display = "none";
+        const detailEl = document.getElementById("detail-view");
+        detailEl.innerHTML = `
+          <button class="back-btn" onclick="closeDetail()">← Back to Feed</button>
+          <h2>${title}</h2>
+          <p><a href="${url}" target="_blank" rel="noopener">View Original Source Page ↗</a></p>
+
+          <div class="ai-meta">
+            <strong>AI Search Query Generated:</strong> <code>${searchQuery}</code>
+          </div>
+
+          <div class="detail-layout">
+            <div>
+              <h3>Ingredients</h3>
+              <ul class="ingredients">
+                ${ingredients.map(i => `<li>${i}</li>`).join("")}
+              </ul>
+            </div>
+            <div>
+              <h3>YouTube Video Match</h3>
+              <p>Because YouTube blocks direct embeds without API keys, click below to open the AI-paired tutorial directly:</p>
+              <p><a href="${ytSearchUrl}" target="_blank" rel="noopener" style="font-weight: bold; font-size: 1.1rem; color: var(--accent);">Search & Watch on YouTube ↗</a></p>
+              
+              <h3 style="margin-top: 2rem;">Instructions</h3>
+              <ol class="steps">
+                ${instructions.map(s => `<li>${s}</li>`).join("")}
+              </ol>
+            </div>
+          </div>
+        `;
+        detailEl.style.display = "block";
+      } catch (err) {
+        status.style.display = "block";
+        status.textContent = "Could not parse structured recipe data from this specific page link.";
+      }
+    }
+
+    function findRecipeSchema(data) {
+      if (!data) return null;
+      if (Array.isArray(data)) {
+        for (let item of data) {
+          let res = findRecipeSchema(item);
+          if (res) return res;
+        }
+      } else if (typeof data === 'object') {
+        let type = data["@type"];
+        if (type === "Recipe" || (Array.isArray(type) && type.includes("Recipe"))) {
+          return data;
+        }
+        if (data["@graph"]) {
+          return findRecipeSchema(data["@graph"]);
+        }
+      }
+      return null;
+    }
+
+    function parseInstructions(raw) {
+      let steps = [];
+      if (typeof raw === 'string') return [raw];
+      if (Array.isArray(raw)) {
+        raw.forEach(item => {
+          if (typeof item === 'string') steps.push(item);
+          else if (item.text) steps.push(item.text);
+          else if (item.itemListElement) {
+            steps.push(...parseInstructions(item.itemListElement));
+          }
+        });
+      }
+      return steps;
+    }
+
+    function closeDetail() {
+      document.getElementById("detail-view").style.display = "none";
+      document.getElementById("feed-grid").style.display = "grid";
+    }
+  </script>
+</body>
+</html>
